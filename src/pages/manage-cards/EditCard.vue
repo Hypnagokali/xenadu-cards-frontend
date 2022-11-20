@@ -34,10 +34,33 @@
                 outlined
                 type="textarea"
                 input-class="text-center"
-                style="background-color: white; font-size: large"
+                :class="getGenderClass(card)"
+                style="font-size: large"
               />
             </div>
           </div>
+          <div class="row">
+            <div class="col-6 q-gutter-sm">
+              <q-checkbox v-model="card.isNoun" label="noun"/>
+              <template v-if="card.isNoun">
+                <q-radio v-model="card.gender" val="n" label="n" />
+                <q-radio v-model="card.gender" val="f" label="f" />
+                <q-radio v-model="card.gender" val="m" label="m" />
+              </template>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <q-input
+                v-model="card.additionalInfos"
+                label="additional info / sentences"
+                rows="2"
+                outlined
+                type="textarea"
+              />
+            </div>
+          </div>
+
         </q-card-section>
         <q-card-section>
           <div
@@ -122,9 +145,13 @@ class HelpfulLink {
 }
 
 const card = ref({
-  front: 'Haus',
-  back: 'House',
+  id: 234,
+  front: 'trinken',
+  back: 'пить',
+  isNoun: false,
   repState: 0,
+  gender: 'n', // m, f, n
+  additionalInfos: 'e-Konjugation mit ё. Regelmäßig\nты пёшь молоко',
   helpfulLinks: [
     {
       id: 1,
@@ -140,7 +167,7 @@ const card = ref({
 });
 
 export default {
-  name: "ManageCards",
+  name: "EditCard",
 
 
   setup() {
@@ -178,6 +205,12 @@ export default {
         api.get('/some/api/call/1')
           .then(() => console.log('success'))
           .catch(() => console.error('error'));
+      },
+      getGenderClass(card) {
+        if (!card.isNoun) return '';
+        if (card.gender === 'm') return 'masculine';
+        if (card.gender === 'f') return 'feminine';
+        if (card.gender === 'n') return 'neuter';
       },
     };
   },
