@@ -1,10 +1,11 @@
 <template>
   <q-page>
     <div>
-      <h4>Edit Card</h4>
+      <h4 class="title_subtitle">{{ title }}</h4>
+      <h4 class="subtitle">...to card set '{{ cardSet.name }}'</h4>
     </div>
     <div>
-      <q-card style="max-width:94vw;">
+      <q-card style="max-width: 94vw">
         <q-card-section>
           <div class="row">
             <div class="col-12" style="text-align: center">
@@ -40,9 +41,9 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-6 q-gutter-sm">
-              <q-checkbox v-model="card.isNoun" label="noun"/>
-              <template v-if="card.isNoun">
+            <div class="col-12 q-gutter-sm">
+              <q-checkbox v-model="card.noun" label="noun" />
+              <template v-if="card.noun">
                 <q-radio v-model="card.gender" val="n" label="n" />
                 <q-radio v-model="card.gender" val="f" label="f" />
                 <q-radio v-model="card.gender" val="m" label="m" />
@@ -60,20 +61,11 @@
               />
             </div>
           </div>
-
         </q-card-section>
         <q-card-section>
-          <div
-          class="q-mb-md"
-            v-for="(link, i) in card.helpfulLinks"
-            :key="i"
-          >
-            <div class="q-mb-xs row" style="justify-content: end;">
-              <q-btn
-                @click="removeLink(i)"
-                label="x"
-              >
-              </q-btn>
+          <div class="q-mb-md" v-for="(link, i) in card.helpfulLinks" :key="i">
+            <div class="q-mb-xs row" style="justify-content: end">
+              <q-btn @click="removeLink(i)" label="x"> </q-btn>
             </div>
             <q-input
               outlined
@@ -81,16 +73,11 @@
               type="text"
               v-model="link.name"
             />
-            <q-input
-              outlined
-              label="link"
-              type="text"
-              v-model="link.value"
-            />
+            <q-input outlined label="link" type="text" v-model="link.value" />
           </div>
 
           <!-- Input new helpful link -->
-          <hr>
+          <hr />
           <div>
             <strong>Add a new helpful link to this card</strong>
             <q-input
@@ -116,7 +103,7 @@
           <div class="row">
             <div class="col-md-6">
               <q-btn @click="saveCard" class="bg-positive">Save</q-btn>
-              <q-btn v-close-popup>Cancel</q-btn>
+              <q-btn @click="back()">Cancel</q-btn>
             </div>
           </div>
         </q-card-section>
@@ -126,9 +113,25 @@
 </template>
 
 <script>
-import { useRoute } from 'vue-router';
-import { ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { ref, onMounted, watch } from 'vue';
 import { api } from 'src/boot/axios';
+import { useUserStore } from 'stores/userStore';
+import { XenaduNotify } from 'src/composables/xenadu-notify';
+
+class Card {
+  constructor() {
+    this.id = 0;
+    this.front = '';
+    this.back = '';
+    this.noun = false;
+    this.repetitionState = 0;
+    this.gender = null; // m, f, n
+    this.additionalInfos = '';
+    this.helpfulLinks = [];
+    this.cardSetId = 0;
+  }
+}
 
 class HelpfulLink {
   constructor(name, value) {
@@ -138,42 +141,86 @@ class HelpfulLink {
   }
 
   get empty() {
-    return this.name.trim().length === 0
-      || (this.value.trim().length === 0
-          || this.value.replace(/http(s)?:\/\//, '').trim().length === 0);
+    return (
+      this.name.trim().length === 0 ||
+      this.value.trim().length === 0 ||
+      this.value.replace(/http(s)?:\/\//, '').trim().length === 0
+    );
   }
 }
 
-const card = ref({
-  id: 234,
-  front: 'trinken',
-  back: 'пить',
-  isNoun: false,
-  repState: 0,
-  gender: 'n', // m, f, n
-  additionalInfos: 'e-Konjugation mit ё. Regelmäßig\nты пёшь молоко',
-  helpfulLinks: [
-    {
-      id: 1,
-      name: 'Weiches Zeichen (Aussprache)',
-      value: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Ru-30-%D0%B1%D1%83%D0%BA%D0%B2%D0%B0-%D0%AC.ogg',
-    },
-    {
-      id: 2,
-      name: 'Hartes Zeichen (Wikipedia)',
-      value: 'https://de.wikipedia.org/wiki/%D0%AA'
-    }
-  ],
+const cardSet = ref({
+  name: '',
 });
 
-export default {
-  name: "EditCard",
+const card = ref(new Card());
 
+const user = ref({
+  id: 0,
+});
+
+const setCardAttributes = (cardSetId, cardId) => {
+  if (cardId == 0) {
+    console.log('new card');
+    card.value = new Card();
+    return;
+  }
+  api
+    .get(`/api/card-sets/${cardSetId}/cards/${cardId}`)
+    .then((res) => {
+      console.log(res.data);
+      card.value = res.data;
+    })
+    .catch((err) => console.log(err));
+};
+
+export default {
+  name: 'EditCard',
 
   setup() {
+    const userStore = useUserStore();
     const newLink = ref(new HelpfulLink('', 'https://'));
     const route = useRoute();
-    const cardSetId = route.params.cardSetId;
+    const router = useRouter();
+    const cardSetId = parseInt(route.params.cardSetId);
+    const cardId = parseInt(route.params.cardId);
+
+    const title = cardId === 0 ? 'Add Card' : 'Edit Card';
+    console.log(cardId === 0);
+
+    onMounted(() => {
+      userStore
+        .getCurrentOrFetchUser()
+        .then((fetchedUser) => {
+          user.value = fetchedUser;
+          console.log('Lese User: ', user.value);
+
+          api
+            .get(`/api/card-sets/${cardSetId}`)
+            .then((res) => {
+              cardSet.value = res.data;
+            })
+            .catch((err) => console.log(err));
+
+          setCardAttributes(cardSetId, cardId);
+        })
+        .catch((e) => {
+          console.error(e);
+          console.error('Fehler beim Laden des Users');
+        });
+    });
+
+    watch(
+      () => card.value.noun,
+      function (newVal) {
+        console.log('changed: ', newVal);
+        if (newVal && card.value.gender == null) {
+          card.value.gender = 'n';
+        } else if (!newVal) {
+          card.value.gender = null;
+        }
+      }
+    );
 
     const loadCard = function (card) {
       showEditDialog.value = true;
@@ -181,6 +228,8 @@ export default {
 
     return {
       card,
+      cardSet,
+      title,
       newLink,
       addHelpfulLink() {
         if (newLink.value.empty) {
@@ -198,16 +247,44 @@ export default {
         }
       },
       saveCard() {
-        if (card.value.front.trim().length === 0 || card.value.back.trim().length === 0) {
+        if (
+          card.value.front.trim().length === 0 ||
+          card.value.back.trim().length === 0
+        ) {
+          XenaduNotify.warning(
+            'Cannot save empty Card. Back and Front must be filled'
+          );
           return;
         }
 
-        api.get('/some/api/call/1')
-          .then(() => console.log('success'))
-          .catch(() => console.error('error'));
+        if (cardId > 0) {
+          api
+            .put(`/api/card-sets/${cardSetId}/cards/${cardId}`, card.value)
+            .then(() => {
+              router.push(`/manage-card-sets/${cardSetId}`);
+            })
+            .catch((e) => {
+              console.log(e);
+              console.error('error');
+            });
+        } else {
+          card.value.cardSetId = cardSetId;
+          api
+            .post(`/api/card-sets/${cardSetId}/cards`, card.value)
+            .then(() => {
+              router.push(`/manage-card-sets/${cardSetId}`);
+            })
+            .catch((e) => {
+              console.log(e);
+              console.error('error');
+            });
+        }
+      },
+      back() {
+        router.push(`/manage-card-sets/${cardSetId}`);
       },
       getGenderClass(card) {
-        if (!card.isNoun) return '';
+        if (!card.noun) return '';
         if (card.gender === 'm') return 'masculine';
         if (card.gender === 'f') return 'feminine';
         if (card.gender === 'n') return 'neuter';

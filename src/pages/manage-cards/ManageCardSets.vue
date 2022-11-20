@@ -3,8 +3,8 @@
     <div>
       <h3>Manage Card Sets</h3>
     </div>
-    <div class="row q-mb-sm">
-      <div class="col-md-12">
+    <div class="row q-mb-sm q-mr-sm">
+      <div class="col-12">
         <q-btn
           class="float-right"
           label="New Card Set"
@@ -282,6 +282,13 @@ export default defineComponent({
         .then((fetchedUser) => {
           user.value = fetchedUser;
           console.log("Lese User: ", user.value);
+          api
+            .get("/api/card-sets")
+            .then((res) => {
+              console.log(res);
+              cardSets.value = res.data;
+            })
+            .catch((err) => console.log(err));
         })
         .catch(() => {
           console.error("Fehler beim Laden des Users");
@@ -293,14 +300,6 @@ export default defineComponent({
     const showCards = function (cardSet) {
       router.push(`/manage-card-sets/${cardSet.id}`);
     };
-
-    api
-      .get("/api/card-sets")
-      .then((res) => {
-        console.log(res);
-        cardSets.value = res.data;
-      })
-      .catch((err) => console.log(err));
 
     return {
       confirmDelete,
