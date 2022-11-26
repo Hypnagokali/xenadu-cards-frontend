@@ -93,11 +93,11 @@
       <q-card>
         <q-card-section class="row items-center">
           <q-avatar icon="report_problem" color="primary" text-color="white" />
-          <span class="q-ml-sm"
-            >Do you want to delete the CardSet
-            <strong>{{ selectedCardSet.name }}</strong
-            >?</span
-          >
+          <span class="q-ml-sm">
+            Do you want to delete the CardSet
+            <strong>{{ selectedCardSet.name }}</strong>
+            ?
+          </span>
           <br />
           <p class="q-ml-sm">
             Warning: all cards will be lost after action "delete"!
@@ -164,67 +164,56 @@
 </template>
 
 <script>
-import { XenaduNotify } from "src/composables/xenadu-notify";
-import { defineComponent, ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { api } from "boot/axios";
-import { useUserStore } from "stores/userStore";
+import { XenaduNotify } from 'src/composables/xenadu-notify';
+import { defineComponent, ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { api } from 'boot/axios';
+import { useUserStore } from 'stores/userStore';
 
 // Refs and constants
 const columns = [
   {
-    name: "id",
-    label: "ID",
-    field: "id",
+    name: 'id',
+    label: 'ID',
+    field: 'id',
     sortable: true,
   },
   {
-    name: "name",
-    label: "Name",
-    field: "name",
+    name: 'name',
+    label: 'Name',
+    field: 'name',
     sortable: true,
   },
   {
-    name: "numberOfCards",
-    label: "Number of cards",
-    field: "numberOfCards",
+    name: 'numberOfCards',
+    label: 'Number of cards',
+    field: 'numberOfCards',
     sortable: true,
   },
   {
-    name: "actions",
-    label: "actions",
+    name: 'actions',
+    label: 'actions',
   },
 ];
 
-const cardSets = ref([
-  {
-    id: 4,
-    numberOfCards: 5009,
-    name: "Russisch",
-  },
-  {
-    id: 75,
-    numberOfCards: 423,
-    name: "Englisch",
-  },
-]);
+const cardSets = ref([]);
 
-const cardSetAction = ref("ADD");
+const cardSetAction = ref('ADD');
 const cardSetActions = {
-  ADD: "ADD",
-  UPDATE: "Update",
+  ADD: 'ADD',
+  UPDATE: 'Update',
 };
 
 const confirmDelete = ref(false);
 
 const selectedCardSet = ref({
-  name: "None",
+  name: 'None',
 });
 
 const newCardSet = ref({
   id: 0,
   userId: 0,
-  name: "",
+  name: '',
 });
 
 const addOrUpdateCardSetModal = ref(false);
@@ -236,34 +225,34 @@ const user = ref({
 // functions
 
 const handleNew = (user) => {
-  console.log("handleNew");
-  console.log("user", user.value);
+  console.log('handleNew');
+  console.log('user', user.value);
   newCardSet.value = {
     id: 0,
     userId: user.value.id,
-    name: "",
+    name: '',
   };
 };
 
 const handleUpdate = (currentCardSet) => {
   if (currentCardSet == null) {
-    throw new Error("selectedCardSet may not be null, if action is UPDATE");
+    throw new Error('selectedCardSet may not be null, if action is UPDATE');
   }
 
   selectedCardSet.value = currentCardSet;
-  console.log("selectedCardSet was set to", selectedCardSet.value);
+  console.log('selectedCardSet was set to', selectedCardSet.value);
 };
 
 const isUserNotSetOrMessageEmpty = () => {
   const cardSetReference =
     cardSetAction.value === cardSetActions.ADD ? newCardSet : selectedCardSet;
   if (cardSetReference.value.userId === 0) {
-    XenaduNotify.error("Benutzer konnte nicht gelesen werden.");
+    XenaduNotify.error('Benutzer konnte nicht gelesen werden.');
     return true;
   }
 
   if (cardSetReference.value.name.trim().length === 0) {
-    XenaduNotify.warning("CardSet without name cannot be added");
+    XenaduNotify.warning('CardSet without name cannot be added');
     return true;
   }
 
@@ -271,7 +260,7 @@ const isUserNotSetOrMessageEmpty = () => {
 };
 
 export default defineComponent({
-  name: "ManageCardSets",
+  name: 'ManageCardSets',
 
   setup() {
     const userStore = useUserStore();
@@ -281,9 +270,9 @@ export default defineComponent({
         .getCurrentOrFetchUser()
         .then((fetchedUser) => {
           user.value = fetchedUser;
-          console.log("Lese User: ", user.value);
+          console.log('Lese User: ', user.value);
           api
-            .get("/api/card-sets")
+            .get('/api/card-sets')
             .then((res) => {
               console.log(res);
               cardSets.value = res.data;
@@ -291,7 +280,7 @@ export default defineComponent({
             .catch((err) => console.log(err));
         })
         .catch(() => {
-          console.error("Fehler beim Laden des Users");
+          console.error('Fehler beim Laden des Users');
         });
     });
 
@@ -323,7 +312,7 @@ export default defineComponent({
         cardSetAction.value = action;
       },
       resetNewCardSet() {
-        newCardSet.value.name = "";
+        newCardSet.value.name = '';
       },
       confirmDeleteCardSet(cardSet) {
         selectedCardSet.value = cardSet;
@@ -353,26 +342,26 @@ export default defineComponent({
       },
       editCardSet() {
         addOrUpdateCardSetModal.value = true;
-        console.log("do edit");
+        console.log('do edit');
       },
       addNewCardSet() {
         if (isUserNotSetOrMessageEmpty()) return;
 
         api
-          .post("/api/card-sets", newCardSet.value)
+          .post('/api/card-sets', newCardSet.value)
           .then((res) => {
             cardSets.value.push(res.data);
           })
           .catch((err) => {
             console.log(err);
-            XenaduNotify.error("Card set could not be added");
+            XenaduNotify.error('Card set could not be added');
           });
 
         addOrUpdateCardSetModal.value = false;
         this.resetNewCardSet();
       },
       updateCardSet() {
-        console.log("Update CardSet");
+        console.log('Update CardSet');
         if (isUserNotSetOrMessageEmpty()) return;
 
         api
@@ -391,7 +380,7 @@ export default defineComponent({
           })
           .catch((err) => {
             console.log(err);
-            XenaduNotify.error("Card set could not be added");
+            XenaduNotify.error('Card set could not be added');
           });
         addOrUpdateCardSetModal.value = false;
         this.selectedCardSet.value = null;

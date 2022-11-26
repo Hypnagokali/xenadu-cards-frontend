@@ -21,6 +21,25 @@ const routes = [
           },
         ],
       },
+      {
+        path: "start",
+        children: [
+          {
+            path: "",
+            component: () => import("pages/learning/SelectCardSet"),
+          },
+          {
+            path: "card-set/:cardSetId/modes",
+            name: "configModes",
+            component: () => import("pages/learning/SelectLearnMode"),
+          },
+          {
+            path: "card-set/:cardSetId/go",
+            name: "startLearning",
+            component: () => import("pages/learning/LearnCards"),
+          },
+        ],
+      },
     ],
   },
 
