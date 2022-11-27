@@ -19,7 +19,7 @@
 
               <q-separator />
 
-              <q-card-section v-if="true" class="bg-positive text-center">
+              <q-card-section v-if="false" class="bg-positive text-center">
                 <q-banner class="">
                   <template v-slot:avatar>
                     <q-icon style="font-size: 4em" name="done" color="green" />
@@ -28,7 +28,7 @@
                 </q-banner>
               </q-card-section>
 
-              <q-card-section v-if="false" class="bg-negative text-center">
+              <q-card-section v-if="true" class="bg-negative text-center">
                 <q-banner class="">
                   <template v-slot:avatar>
                     <q-icon
