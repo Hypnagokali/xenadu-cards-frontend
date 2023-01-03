@@ -6,6 +6,19 @@
     <div class="container">
       <div>
         <div class="row">
+          <div class="col-12">
+            <div class="q-pa-md">
+              <q-linear-progress
+                rounded
+                size="20px"
+                :value="cardsLearned / totalCards"
+                color="green-8"
+                class="q-mt-sm"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="row">
           <div class="col-12 text-center">
             <h6 class="light-header">New Card</h6>
           </div>
@@ -75,4 +88,29 @@
   </q-page>
 </template>
 
-<script></script>
+<script>
+import { ref, onBeforeUnmount } from 'vue';
+
+const cardsLearned = ref(5);
+const totalCards = ref(20);
+
+export default {
+  name: 'LearnCards',
+
+  setup() {
+    window.addEventListener('hashchange', (e) => {
+      if (!e.newURL.includes('go')) {
+        console.log('Kill session of learn-manager');
+      }
+    });
+
+    onBeforeUnmount(() => {
+      console.log('Kill session of learn-manager');
+    });
+    return {
+      cardsLearned,
+      totalCards,
+    };
+  },
+};
+</script>
