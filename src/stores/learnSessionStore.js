@@ -3,16 +3,18 @@ import { defineStore } from 'pinia';
 export const useLearnSessionStore = defineStore('learnSessionStore', {
   state: () => ({
     session: {
-      sessionId: null,
+      learnSessionId: null,
+      currentCard: null,
       spellChecking: false,
       totalNumberOfCards: 0,
       numberOfCardsPassed: 0,
+      answerResult: null,
     },
   }),
 
   getters: {
-    sessionId(state) {
-      return state.session.sessionId;
+    learnSessionId(state) {
+      return state.session.learnSessionId;
     },
     spellChecking(state) {
       return state.session.spellChecking;
@@ -28,6 +30,9 @@ export const useLearnSessionStore = defineStore('learnSessionStore', {
   actions: {
     setSession(sessionObj) {
       this.session = sessionObj;
+    },
+    setSessionId(sessionId) {
+      this.session.learnSessionId = sessionId;
     },
   },
 });
