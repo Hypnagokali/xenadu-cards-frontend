@@ -89,7 +89,9 @@
 </template>
 
 <script>
-import { ref, onBeforeUnmount } from 'vue';
+import { ref } from 'vue';
+import { useLearnSessionStore } from 'stores/learnSessionStore';
+import { XenaduNotify } from 'src/composables/xenadu-notify';
 
 const cardsLearned = ref(5);
 const totalCards = ref(20);
@@ -98,15 +100,10 @@ export default {
   name: 'LearnCards',
 
   setup() {
-    window.addEventListener('hashchange', (e) => {
-      if (!e.newURL.includes('go')) {
-        console.log('Kill session of learn-manager');
-      }
-    });
+    const learnSessionStore = useLearnSessionStore();
+    
+    console.table(learnSessionStore.session);
 
-    onBeforeUnmount(() => {
-      console.log('Kill session of learn-manager');
-    });
     return {
       cardsLearned,
       totalCards,

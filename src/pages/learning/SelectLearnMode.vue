@@ -1,6 +1,7 @@
 <template>
   <q-page>
     <div>
+      <h3>{{ languageName }}</h3>
       <h4>Configure learn mode</h4>
     </div>
     <div>
@@ -21,11 +22,11 @@
                 </div>
                 <div class="offset-md-2 col-md-4 col-12">
                   <q-input
-                    label="Total cards"
+                    label="Cards to repeat"
                     type="number"
                     min="0"
                     max="100"
-                    v-model="numberOfTotalCards"
+                    v-model="numberOfCardsForRepetition"
                   />
                 </div>
               </div>
@@ -44,7 +45,7 @@
                 val="write"
               />
               <q-radio
-                disabled
+                :disable="true"
                 label="Fast mode (check yourself)"
                 v-model="checkMode"
                 val="fast"
@@ -56,7 +57,7 @@
             <q-card-section>
               <div class="text-h6">Set your learn mode</div>
               <q-checkbox
-                disabled
+                :disable="true"
                 label="Repetions only"
                 v-model="isRepsOnlyMode"
               />
@@ -71,7 +72,7 @@
           <q-btn
             label="Let me start learning"
             color="primary"
-            :to="{ name: 'startLearning', params: { cardSetId: 1 } }"
+            @click="startLearnSession()"
           />
         </div>
       </div>
@@ -81,21 +82,60 @@
 
 <script>
 import { ref } from 'vue';
+import { api } from 'src/boot/axios';
+import { XenaduNotify } from 'src/composables/xenadu-notify';
+import { useRoute, useRouter } from 'vue-router';
+import { useLearnSessionStore } from 'stores/learnSessionStore';
 
 const checkMode = ref('write');
 const isRepsOnlyMode = ref(false);
 const numberOfNewCards = ref(4);
-const numberOfTotalCards = ref(20);
+const numberOfCardsForRepetition = ref(20);
 
 export default {
   name: 'SelectLearnMode',
 
   setup() {
+    const route = useRoute();
+    const router = useRouter();
+    const cardSetId = route.params.cardSetId;
+    const languageName = ref('');
+
+    const learnSessionStore = useLearnSessionStore();
+
+    api
+      .get(`/api/card-sets/${cardSetId}`)
+      .then((res) => {
+        languageName.value = res.data.name;
+      })
+      .catch((e) => {
+        XenaduNotify.error('Could not fetch the CardSet');
+      });
+
     return {
       checkMode,
       isRepsOnlyMode,
       numberOfNewCards,
-      numberOfTotalCards,
+      numberOfCardsForRepetition,
+      languageName,
+      startLearnSession: function () {
+        api
+          .post(`/api/learn-session/card-set/${cardSetId}`, {
+            numberOfNewCards: numberOfNewCards.value,
+            numberOfCardsForRepetition: numberOfCardsForRepetition.value,
+            spellChecking: checkMode.value === 'write',
+            onlyRepetition: isRepsOnlyMode.value,
+          })
+          .then((res) => {
+            console.log('success');
+            console.log(res.data);
+
+            learnSessionStore.setSession(res.data);
+
+            router.push({ name: 'startLearning', params: { cardSetId } });
+          })
+          .catch((e) => XenaduNotify.error('Could not create LearnSession'));
+      },
     };
   },
 };
