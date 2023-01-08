@@ -128,7 +128,7 @@ export default {
           })
           .then((res) => {
             console.log('success');
-            console.log(res.data);
+            console.table(res.data);
 
             learnSessionStore.setSession(res.data);
 

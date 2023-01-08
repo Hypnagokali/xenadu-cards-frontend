@@ -1,42 +1,43 @@
 const routes = [
   {
-    path: "/",
-    component: () => import("layouts/MainLayout.vue"),
+    path: '/',
+    component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: "", component: () => import("pages/IndexPage.vue") },
+      { path: '', component: () => import('pages/IndexPage.vue') },
       {
-        path: "manage-card-sets",
+        path: 'manage-card-sets',
         children: [
           {
-            path: "",
-            component: () => import("pages/manage-cards/ManageCardSets"),
+            path: '',
+            component: () => import('pages/manage-cards/ManageCardSets'),
           },
           {
-            path: ":cardSetId",
-            component: () => import("pages/manage-cards/ManageCards"),
+            path: ':cardSetId',
+            component: () => import('pages/manage-cards/ManageCards'),
           },
           {
-            path: ":cardSetId/:cardId",
-            component: () => import("pages/manage-cards/EditCard"),
+            path: ':cardSetId/:cardId',
+            component: () => import('pages/manage-cards/EditCard'),
           },
         ],
       },
       {
-        path: "start",
+        path: 'start',
         children: [
           {
-            path: "",
-            component: () => import("pages/learning/SelectCardSet"),
+            path: '',
+            name: 'selectCardSet',
+            component: () => import('pages/learning/SelectCardSet'),
           },
           {
-            path: "card-set/:cardSetId/modes",
-            name: "configModes",
-            component: () => import("pages/learning/SelectLearnMode"),
+            path: 'card-set/:cardSetId/modes',
+            name: 'configModes',
+            component: () => import('pages/learning/SelectLearnMode'),
           },
           {
-            path: "card-set/:cardSetId/go",
-            name: "startLearning",
-            component: () => import("pages/learning/LearnCards"),
+            path: 'card-set/:cardSetId/go',
+            name: 'startLearning',
+            component: () => import('pages/learning/LearnCards'),
           },
         ],
       },
@@ -46,8 +47,8 @@ const routes = [
   // Always leave this as last one,
   // but you can also remove it
   {
-    path: "/:catchAll(.*)*",
-    component: () => import("pages/ErrorNotFound.vue"),
+    path: '/:catchAll(.*)*',
+    component: () => import('pages/ErrorNotFound.vue'),
   },
 ];
 

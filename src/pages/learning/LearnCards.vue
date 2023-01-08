@@ -1,10 +1,10 @@
 <template>
   <q-page>
     <div>
-      <h4>You are learning: Russisch</h4>
+      <h4>You are learning: {{ cardSetName }}</h4>
     </div>
     <div class="container">
-      <div>
+      <div v-if="state !== states.DONE && state !== states.NOTHING_TO_REPEAT">
         <div class="row">
           <div class="col-12">
             <div class="q-pa-md">
@@ -12,7 +12,7 @@
                 rounded
                 size="20px"
                 :value="cardsLearned / totalCards"
-                color="green-8"
+                color="blue-8"
                 class="q-mt-sm"
               />
             </div>
@@ -76,24 +76,103 @@
           </div>
         </div>
       </div>
+      <div v-if="state === states.DONE">
+        <div class="row">
+          <div class="col-12">
+            <q-card class="question-card">
+              <q-card-section class="bg-secondary text-center">
+                <div class="text-h5">Your statistics</div>
+                <div>
+                  <p>
+                    <strong>{{ statistics.correctAnswers }}</strong>
+                    correctly answered.
+                  </p>
+                  <p>
+                    <strong>{{ statistics.wrongAnswers }}</strong>
+                    answered incorrectly.
+                  </p>
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+      </div>
+      <div v-if="state === states.NOTHING_TO_REPEAT">
+        <div class="row">
+          <div class="col-12">
+            <q-card class="question-card">
+              <q-card-section class="bg-secondary text-center">
+                <div class="text-h5">
+                  There are currently no cards to repeat
+                </div>
+                <p>Please come back later or learn new cards</p>
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+      </div>
 
       <div class="row q-mt-lg q-mb-sm q-mr-sm justify-center">
-        <div class="q-mr-xl">
-          <q-btn
-            icon-right="fact_check"
-            label="Check"
-            color="primary"
-            @click="checkAnswer()"
-          />
-        </div>
-        <div>
-          <q-btn icon-right="help_outline" label="No Idea" color="orange-8" />
+        <div
+          class="row"
+          v-if="state === states.WAIT_FOR_ANSWER && state !== states.DONE"
+        >
+          <div class="q-mr-xl">
+            <q-btn
+              icon-right="fact_check"
+              label="Check"
+              color="primary"
+              @click="checkAnswer()"
+            />
+          </div>
+          <div>
+            <q-btn
+              icon-right="help_outline"
+              label="No Idea (give me a hint)"
+              color="orange-8"
+            />
+          </div>
         </div>
         <q-btn
-          v-if="answered"
+          v-if="state === states.NOTHING_TO_REPEAT"
           class="float-right"
+          icon="chevron_left"
+          label="Close learn session"
+          color="primary"
+          @click="close()"
+        />
+        <q-btn
+          v-if="
+            state !== states.WAIT_FOR_ANSWER &&
+            totalCards === cardsLearned &&
+            state !== states.DONE &&
+            state !== states.NOTHING_TO_REPEAT
+          "
+          class="float-right"
+          icon-right="stars"
+          label="Finish"
+          color="primary"
+          @click="finish()"
+        />
+        <q-btn
+          v-if="
+            state !== states.WAIT_FOR_ANSWER &&
+            state !== states.DONE &&
+            totalCards > cardsLearned
+          "
+          class="float-right"
+          icon-right="fast_forward"
           label="Next"
           color="primary"
+          @click="next()"
+        />
+        <q-btn
+          v-if="state === states.DONE"
+          class="float-right"
+          icon-right="change_circle"
+          label="One more round, please"
+          color="primary"
+          @click="restart()"
         />
       </div>
     </div>
@@ -105,12 +184,18 @@ import { ref, onMounted } from 'vue';
 import { useLearnSessionStore } from 'stores/learnSessionStore';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 import { api } from 'src/boot/axios';
+import { useRoute, useRouter } from 'vue-router';
 
 const cardsLearned = ref(0);
 const totalCards = ref(100);
-const answered = ref(false);
+const cardSetName = ref('');
 const answer = ref('');
 const expectedAnswer = ref('');
+const statistics = ref({
+  correctAnswers: 0,
+  wrongAnswers: 0,
+});
+
 const currentCard = ref({
   front: '',
   repetitionState: 0,
@@ -122,6 +207,8 @@ const states = {
   WAIT_FOR_ANSWER: 'WAIT_FOR_ANSWER',
   WRONG_ANSWER: 'WRONG_ANSWER',
   CORRECT_ANSWER: 'CORRECT_ANSWER',
+  DONE: 'DONE',
+  NOTHING_TO_REPEAT: 'NOTHING_TO_REPEAT',
 };
 
 const state = ref(states.WAIT_FOR_ANSWER);
@@ -129,9 +216,9 @@ const state = ref(states.WAIT_FOR_ANSWER);
 function init() {
   cardsLearned.value = 0;
   totalCards.value = 100;
-  answered.value = false;
   answer.value = '';
   expectedAnswer.value = '';
+  state.value = states.WAIT_FOR_ANSWER;
 }
 
 function setValues(learnSession) {
@@ -143,7 +230,21 @@ export default {
   name: 'LearnCards',
 
   setup() {
+    const router = useRouter();
+    const route = useRoute();
+    const cardSetId = route.params.cardSetId;
+
     const learnSessionStore = useLearnSessionStore();
+
+    const redirectToSelectLearnMode = function () {
+      router.push({
+        name: 'configModes',
+        params: { cardSetId },
+      });
+    };
+
+    console.table(learnSessionStore.session);
+
     let sessionId = learnSessionStore.session.learnSessionId;
 
     if (sessionId == null) {
@@ -156,30 +257,52 @@ export default {
     if (sessionId != null) {
       sessionStorage.setItem('learnSession', sessionId);
     } else {
-      XenaduNotify.error('No session available');
+      redirectToSelectLearnMode();
     }
 
     onMounted(() => {
       init();
-      api
-        .get(`/api/learn-session/${sessionId}/current`)
-        .then((res) => {
-          learnSessionStore.setSession(res.data);
-          currentCard.value = res.data.currentCard;
-          setValues(learnSessionStore.session);
-        })
-        .catch();
+
+      // todo: check, why learnSessionStore.getCardSetId is not working :,(
+      if (learnSessionStore.session.cardSetId < 1) {
+        redirectToSelectLearnMode();
+      } else {
+        api
+          .get(`/api/card-sets/${learnSessionStore.session.cardSetId}`)
+          .then((res) => {
+            cardSetName.value = res.data.name;
+          })
+          .catch((e) => XenaduNotify.error('Card set could not be loaded'));
+
+        api
+          .get(`/api/learn-session/${sessionId}/current`)
+          .then((res) => {
+            learnSessionStore.setSession(res.data);
+            currentCard.value = res.data.currentCard;
+            setValues(learnSessionStore.session);
+            if (res.data.currentCard == null) {
+              state.value = states.NOTHING_TO_REPEAT;
+            }
+          })
+          .catch();
+      }
     });
 
-    console.table(learnSessionStore.session);
+    // console.table(learnSessionStore.session);
 
     return {
       cardsLearned,
       totalCards,
       currentCard,
-      answered,
+      state,
+      states,
       answer,
+      cardSetName,
       expectedAnswer,
+      statistics,
+      close() {
+        router.push({ name: 'selectCardSet' });
+      },
       isWrong: function () {
         return state.value === states.WRONG_ANSWER;
       },
@@ -193,13 +316,44 @@ export default {
           return `Card correct answered for ${currentCard.value.repetitionState} times`;
         }
       },
+      next() {
+        answer.value = '';
+        console.log('state: ' + state.value);
+        console.log('learned: ' + cardsLearned.value);
+        console.log('total: ' + totalCards.value);
+        if (cardsLearned.value < totalCards.value) {
+          api
+            .get(`/api/learn-session/${sessionId}/current`)
+            .then((res) => {
+              state.value = states.WAIT_FOR_ANSWER;
+              learnSessionStore.setSession(res.data);
+              currentCard.value = res.data.currentCard;
+              setValues(learnSessionStore.session);
+            })
+            .catch();
+        }
+      },
+      finish() {
+        statistics.value = learnSessionStore.session.statistics;
+        sessionStorage.removeItem('learnSession');
+        api
+          .post(`/api/learn-session/${sessionId}/finish`)
+          .then(() => {
+            state.value = states.DONE;
+            XenaduNotify.info('finished');
+          })
+          .catch((e) => {
+            XenaduNotify.error('Error: Could not finish the session');
+          });
+      },
       checkAnswer() {
         api
           .post(`/api/learn-session/${sessionId}/check`, {
             answer: answer.value,
           })
           .then((res) => {
-            console.table(res.data.answerResult);
+            cardsLearned.value++;
+            // console.table(res.data.answerResult);
             learnSessionStore.setSession(res.data);
             if (res.data.answerResult.isCorrect) {
               state.value = states.CORRECT_ANSWER;
@@ -212,6 +366,9 @@ export default {
           .catch((e) => {
             XenaduNotify.error('Sorry, but the answer could not be checked.');
           });
+      },
+      restart() {
+        redirectToSelectLearnMode();
       },
     };
   },

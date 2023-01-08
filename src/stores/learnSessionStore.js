@@ -4,6 +4,7 @@ export const useLearnSessionStore = defineStore('learnSessionStore', {
   state: () => ({
     session: {
       learnSessionId: null,
+      cardSetId: -1,
       currentCard: null,
       spellChecking: false,
       totalNumberOfCards: 0,
@@ -13,6 +14,9 @@ export const useLearnSessionStore = defineStore('learnSessionStore', {
   }),
 
   getters: {
+    getCardSetId(state) {
+      return state.session.cardSetId;
+    },
     learnSessionId(state) {
       return state.session.learnSessionId;
     },
