@@ -50,6 +50,15 @@
               </template>
             </div>
           </div>
+          <div class="q-mb-md row">
+            <div class="col-12">
+              <q-input
+                v-model="card.hint"
+                label="hint (can be displayed during learning)"
+                outlined
+              />
+            </div>
+          </div>
           <div class="row">
             <div class="col-12">
               <q-input
@@ -65,7 +74,7 @@
         <q-card-section>
           <div class="q-mb-md" v-for="(link, i) in card.helpfulLinks" :key="i">
             <div class="q-mb-xs row" style="justify-content: end">
-              <q-btn @click="removeLink(i)" label="x"> </q-btn>
+              <q-btn @click="removeLink(i)" label="x"></q-btn>
             </div>
             <q-input
               outlined

@@ -41,6 +41,12 @@
                     <q-icon style="font-size: 4em" name="done" color="green" />
                   </template>
                   <p class="text-h6">Correct Answer</p>
+                  <p>{{ additionalInfos() }}</p>
+                  <ul>
+                    <li v-for="(hl, index) in helpfulLinks()" :key="index">
+                      <a :href="hl.link">{{ hl.name }}</a>
+                    </li>
+                  </ul>
                 </q-banner>
               </q-card-section>
 
@@ -56,6 +62,19 @@
                   <p class="text-h6">
                     {{ expectedAnswer }}
                   </p>
+                  <p>{{ additionalInfos() }}</p>
+                  <q-list bordered separator>
+                    <q-item
+                      clickable
+                      @click="openLink(hl.value)"
+                      v-for="(hl, index) in helpfulLinks()"
+                      :key="index"
+                    >
+                      <q-item-section>
+                        {{ hl.name }}
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
                 </q-banner>
               </q-card-section>
 
@@ -185,6 +204,7 @@ import { useLearnSessionStore } from 'stores/learnSessionStore';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 import { api } from 'src/boot/axios';
 import { useRoute, useRouter } from 'vue-router';
+import { openURL } from 'quasar';
 
 const cardsLearned = ref(0);
 const totalCards = ref(100);
@@ -300,6 +320,11 @@ export default {
       cardSetName,
       expectedAnswer,
       statistics,
+      openLink(link) {
+        if (link) {
+          openURL(link);
+        }
+      },
       close() {
         router.push({ name: 'selectCardSet' });
       },
@@ -345,6 +370,21 @@ export default {
           .catch((e) => {
             XenaduNotify.error('Error: Could not finish the session');
           });
+      },
+      showHint() {
+        const hint = learnSessionStore.currentCard?.hint;
+        return hint ? hint : 'No hint available';
+      },
+      additionalInfos() {
+        const infos = learnSessionStore.session.currentCard?.additionalInfos;
+        console.table(learnSessionStore.session.currentCard);
+        console.log(infos);
+        return infos ? infos : '';
+      },
+      helpfulLinks() {
+        const links = learnSessionStore.session.currentCard?.helpfulLinks;
+
+        return links ? links : [];
       },
       checkAnswer() {
         api
