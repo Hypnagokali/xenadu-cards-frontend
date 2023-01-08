@@ -42,11 +42,18 @@
                   </template>
                   <p class="text-h6">Correct Answer</p>
                   <p>{{ additionalInfos() }}</p>
-                  <ul>
-                    <li v-for="(hl, index) in helpfulLinks()" :key="index">
-                      <a :href="hl.link">{{ hl.name }}</a>
-                    </li>
-                  </ul>
+                  <q-list bordered separator>
+                    <q-item
+                      clickable
+                      @click="openLink(hl.value)"
+                      v-for="(hl, index) in helpfulLinks()"
+                      :key="index"
+                    >
+                      <q-item-section>
+                        {{ hl.name }}
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
                 </q-banner>
               </q-card-section>
 
