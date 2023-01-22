@@ -27,8 +27,46 @@
           <div class="col-12">
             <q-card class="question-card">
               <q-card-section class="bg-secondary text-center">
-                <div class="text-h5">{{ currentCard.front }}</div>
+                <div class="text-h5">
+                  {{ currentCard.front }}
+                </div>
+                <div v-if="isShowHint">
+                  {{ showHint() }}
+                </div>
               </q-card-section>
+
+              <template
+                v-if="
+                  state === states.CORRECT_ANSWER ||
+                  state === states.WRONG_ANSWER
+                "
+              >
+                <q-separator />
+
+                <q-card-section
+                  :class="
+                    cardAttributes.getGenderClass(currentCard) + ' text-center'
+                  "
+                >
+                  <div class="text-h5">
+                    {{ currentCard.back }}
+                    {{ cardAttributes.getGenderChar(currentCard) }}
+                  </div>
+                  <p>{{ additionalInfos() }}</p>
+                  <q-list bordered separator v-if="helpfulLinks().length > 0">
+                    <q-item
+                      clickable
+                      @click="openLink(hl.value)"
+                      v-for="(hl, index) in helpfulLinks()"
+                      :key="index"
+                    >
+                      <q-item-section>
+                        {{ hl.name }}
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-card-section>
+              </template>
 
               <q-separator />
 
@@ -41,19 +79,6 @@
                     <q-icon style="font-size: 4em" name="done" color="green" />
                   </template>
                   <p class="text-h6">Correct Answer</p>
-                  <p>{{ additionalInfos() }}</p>
-                  <q-list bordered separator>
-                    <q-item
-                      clickable
-                      @click="openLink(hl.value)"
-                      v-for="(hl, index) in helpfulLinks()"
-                      :key="index"
-                    >
-                      <q-item-section>
-                        {{ hl.name }}
-                      </q-item-section>
-                    </q-item>
-                  </q-list>
                 </q-banner>
               </q-card-section>
 
@@ -69,8 +94,8 @@
                   <p class="text-h6">
                     {{ expectedAnswer }}
                   </p>
-                  <p>{{ additionalInfos() }}</p>
-                  <q-list bordered separator>
+                  <!-- <p>{{ additionalInfos() }}</p> -->
+                  <!-- <q-list bordered separator>
                     <q-item
                       clickable
                       @click="openLink(hl.value)"
@@ -81,7 +106,7 @@
                         {{ hl.name }}
                       </q-item-section>
                     </q-item>
-                  </q-list>
+                  </q-list> -->
                 </q-banner>
               </q-card-section>
 
@@ -110,12 +135,20 @@
                 <div class="text-h5">Your statistics</div>
                 <div>
                   <p>
+                    Dauer:
+                    <strong>
+                      {{ humanTime(statistics.durationInSeconds) }}
+                    </strong>
+                  </p>
+                  <p>
                     <strong>{{ statistics.correctAnswers }}</strong>
-                    correctly answered.
+                    {{ getCardGrammar(statistics.correctAnswers) }} correctly
+                    answered.
                   </p>
                   <p>
                     <strong>{{ statistics.wrongAnswers }}</strong>
-                    answered incorrectly.
+                    {{ getCardGrammar(statistics.wrongAnswers) }} incorrectly
+                    answered.
                   </p>
                 </div>
               </q-card-section>
@@ -154,8 +187,9 @@
           <div>
             <q-btn
               icon-right="help_outline"
-              label="No Idea (give me a hint)"
+              label="Hint"
               color="orange-8"
+              @click="isShowHint = true"
             />
           </div>
         </div>
@@ -212,15 +246,18 @@ import { XenaduNotify } from 'src/composables/xenadu-notify';
 import { api } from 'src/boot/axios';
 import { useRoute, useRouter } from 'vue-router';
 import { openURL } from 'quasar';
+import cardAttributes from 'src/composables/cardAttributes';
 
 const cardsLearned = ref(0);
 const totalCards = ref(100);
 const cardSetName = ref('');
 const answer = ref('');
+const isShowHint = ref(false);
 const expectedAnswer = ref('');
 const statistics = ref({
   correctAnswers: 0,
   wrongAnswers: 0,
+  durationInSeconds: 0,
 });
 
 const currentCard = ref({
@@ -241,6 +278,7 @@ const states = {
 const state = ref(states.WAIT_FOR_ANSWER);
 
 function init() {
+  isShowHint.value = false;
   cardsLearned.value = 0;
   totalCards.value = 100;
   answer.value = '';
@@ -260,6 +298,26 @@ export default {
     const router = useRouter();
     const route = useRoute();
     const cardSetId = route.params.cardSetId;
+
+    const getLearnSessionFromServer = function (sessionId, onFailure) {
+      api
+        .get(`/api/learn-session/${sessionId}/current`)
+        .then((res) => {
+          learnSessionStore.setSession(res.data);
+          currentCard.value = res.data.currentCard;
+          setValues(learnSessionStore.session);
+          if (res.data.currentCard == null) {
+            state.value = states.NOTHING_TO_REPEAT;
+          }
+        })
+        .catch((e) => {
+          if (typeof onFailure === 'function') {
+            onFailure();
+          } else {
+            console.error(e);
+          }
+        });
+    };
 
     const learnSessionStore = useLearnSessionStore();
 
@@ -292,7 +350,14 @@ export default {
 
       // todo: check, why learnSessionStore.getCardSetId is not working :,(
       if (learnSessionStore.session.cardSetId < 1) {
-        redirectToSelectLearnMode();
+        if (sessionId) {
+          getLearnSessionFromServer(sessionId, function () {
+            // onFailure
+            redirectToSelectLearnMode();
+          });
+        } else {
+          redirectToSelectLearnMode();
+        }
       } else {
         api
           .get(`/api/card-sets/${learnSessionStore.session.cardSetId}`)
@@ -318,6 +383,7 @@ export default {
     // console.table(learnSessionStore.session);
 
     return {
+      isShowHint,
       cardsLearned,
       totalCards,
       currentCard,
@@ -327,6 +393,7 @@ export default {
       cardSetName,
       expectedAnswer,
       statistics,
+      cardAttributes,
       openLink(link) {
         if (link) {
           openURL(link);
@@ -349,6 +416,7 @@ export default {
         }
       },
       next() {
+        isShowHint.value = false;
         answer.value = '';
         console.log('state: ' + state.value);
         console.log('learned: ' + cardsLearned.value);
@@ -366,21 +434,33 @@ export default {
         }
       },
       finish() {
-        statistics.value = learnSessionStore.session.statistics;
         sessionStorage.removeItem('learnSession');
         api
           .post(`/api/learn-session/${sessionId}/finish`)
-          .then(() => {
+          .then((res) => {
+            console.log('FINISH STATISTICS');
+            console.log(res.data);
+            learnSessionStore.setSession(res.data);
+            statistics.value = learnSessionStore.session.statistics;
             state.value = states.DONE;
             XenaduNotify.info('finished');
           })
           .catch((e) => {
             XenaduNotify.error('Error: Could not finish the session');
+          })
+          .finally(() => {
+            learnSessionStore.reset();
           });
       },
       showHint() {
-        const hint = learnSessionStore.currentCard?.hint;
+        const hint = learnSessionStore.session.currentCard?.hint;
         return hint ? hint : 'No hint available';
+      },
+      getCardGrammar(numberOfCards) {
+        if (numberOfCards < 2) {
+          return 'card was';
+        }
+        return 'cards were';
       },
       additionalInfos() {
         const infos = learnSessionStore.session.currentCard?.additionalInfos;
@@ -416,6 +496,14 @@ export default {
       },
       restart() {
         redirectToSelectLearnMode();
+      },
+      humanTime(sec) {
+        if (sec > 60) {
+          const minutes = sec / 60;
+          return `${Math.round(minutes)} minutes`;
+        } else {
+          return `${sec} seconds`;
+        }
       },
     };
   },

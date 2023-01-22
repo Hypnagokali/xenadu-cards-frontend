@@ -35,6 +35,14 @@ import { defineComponent, ref } from 'vue';
 const oldChanges = ref({});
 const changes = ref([
   {
+    changeDate: '2023-01-22',
+    changeLogs: [
+      'Dialog for resuming or closing an open learn session',
+      'Show hint while learning',
+      'Show back of card when answered',
+    ],
+  },
+  {
     changeDate: '2023-01-08',
     changeLogs: [
       'First version of Manage-Card-Sets',

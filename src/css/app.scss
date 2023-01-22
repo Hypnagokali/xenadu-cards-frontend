@@ -11,6 +11,10 @@
   background-color: rgb(177, 177, 177);
 }
 
+.bg-dialog {
+  background-color: $dialog;
+}
+
 .subtitle {
   font-size: medium;
   color: $secondary;

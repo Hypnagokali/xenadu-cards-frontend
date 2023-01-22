@@ -12,6 +12,14 @@
       </q-tabs>
     </q-header>
     <q-page-container class="q-pl-md">
+      <div class="row" v-if="learnSessionStillOpen()">
+        <div class="col-md-3">
+          <back-to-learn-session
+            @resume="doResume()"
+            @closeLearnSession="doCloseSession()"
+          ></back-to-learn-session>
+        </div>
+      </div>
       <div class="row">
         <div class="col-md-3">
           <!-- space for container menu -->
@@ -25,9 +33,13 @@
 </template>
 
 <script>
+import BackToLearnSession from 'src/components/BackToLearnSession.vue';
 import { defineComponent, ref, watch, onUpdated } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from 'stores/userStore';
+import { useLearnSessionStore } from 'stores/learnSessionStore';
+import { retrieveLearnSession } from 'src/composables/retrieveLearnSession';
+import { api } from 'src/boot/axios';
 
 const menuItems = [
   {
@@ -46,29 +58,63 @@ const userInfo = ref({
 
 export default defineComponent({
   name: 'MainLayout',
-
   setup() {
     const selectedItem = ref({});
     const router = useRouter();
-
+    const route = useRoute();
     const userStore = useUserStore();
-
+    const learnSessionStore = useLearnSessionStore();
     setInterval(() => {
       userStore.retrieveUser().then(() => {
         userInfo.value.userName =
           userStore.user.firstName + ' ' + userStore.user.lastName;
       });
     }, 2000);
-
     watch(selectedItem, (newVal, oldVal) => {
       router.push(newVal);
     });
-
     return {
       userInfo,
       selectedItem,
       menuItems,
+      learnSessionStore,
+      learnSessionStillOpen() {
+        const sessionId = sessionStorage.getItem('learnSession');
+        return (
+          (learnSessionStore.getCardSetId > 0 || sessionId) &&
+          route.name !== 'startLearning'
+        );
+      },
+      doResume() {
+        const sessionId = sessionStorage.getItem('learnSession');
+
+        if (learnSessionStore.getCardSetId > 0) {
+          router.push({
+            name: 'startLearning',
+            params: { cardSetId: learnSessionStore.getCardSetId },
+          });
+        } else if (sessionId) {
+          retrieveLearnSession(sessionId, learnSessionStore).then((session) => {
+            router.push({
+              name: 'startLearning',
+              params: { cardSetId: session.cardSetId },
+            });
+          });
+        }
+      },
+      doCloseSession() {
+        const sessionId = sessionStorage.getItem('learnSession');
+        // TODO: implement learnSessionApi
+        api
+          .post(`/api/learn-session/${sessionId}/finish?cancel=true`)
+          .then(() => console.log('cancelled'))
+          .finally(() => {
+            learnSessionStore.reset();
+            sessionStorage.removeItem('learnSession');
+          });
+      },
     };
   },
+  components: { BackToLearnSession },
 });
 </script>

@@ -11,9 +11,13 @@ export const useLearnSessionStore = defineStore('learnSessionStore', {
       numberOfCardsPassed: 0,
       answerResult: null,
     },
+    showHint: false,
   }),
 
   getters: {
+    currentCard(state) {
+      return state.session.currentCard?.hint;
+    },
     getCardSetId(state) {
       return state.session.cardSetId;
     },
@@ -32,11 +36,28 @@ export const useLearnSessionStore = defineStore('learnSessionStore', {
   },
 
   actions: {
+    reset() {
+      this.session = {
+        learnSessionId: null,
+        cardSetId: -1,
+        currentCard: null,
+        spellChecking: false,
+        totalNumberOfCards: 0,
+        numberOfCardsPassed: 0,
+        answerResult: null,
+      };
+      this.showHint = false;
+    },
+    setShowHint(val) {
+      this.showHint = val;
+    },
     setSession(sessionObj) {
       this.session = sessionObj;
+      this.showHint = false;
     },
     setSessionId(sessionId) {
       this.session.learnSessionId = sessionId;
+      this.showHint = false;
     },
   },
 });

@@ -10,10 +10,11 @@
           <q-card bordered class="bg-grey-2 text-black">
             <q-card-section>
               <div class="text-h6">How many cards do you want to learn</div>
+              <div class="text-subtitle2">Total: {{ totalCards() }}</div>
               <div class="row">
                 <div class="col-md-4 col-12">
                   <q-input
-                    label="New cards (if any)"
+                    label="New cards (if any exist, otherwise cards to repeat)"
                     v-model="numberOfNewCards"
                     type="number"
                     min="0"
@@ -118,6 +119,12 @@ export default {
       numberOfNewCards,
       numberOfCardsForRepetition,
       languageName,
+      totalCards() {
+        return (
+          parseInt(numberOfNewCards.value) +
+          parseInt(numberOfCardsForRepetition.value)
+        );
+      },
       startLearnSession: function () {
         api
           .post(`/api/learn-session/card-set/${cardSetId}`, {
