@@ -4,7 +4,23 @@
       <q-toolbar>
         <q-toolbar-title>x - cards</q-toolbar-title>
         <q-space />
-        <div>{{ userInfo.userName }}</div>
+        <div class="q-pa-md">
+          <q-btn-dropdown
+            v-if="
+              userInfo.userName != null && userInfo.userName.trim().length > 0
+            "
+            color="primary"
+            :label="userInfo.userName"
+          >
+            <q-list>
+              <q-item clickable v-close-popup @click="logout()">
+                <q-item-section>
+                  <q-item-label>Logout</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-btn-dropdown>
+        </div>
       </q-toolbar>
       <q-tabs>
         <q-route-tab to="/manage-card-sets" label="Manage Cards" />
@@ -53,7 +69,7 @@ const menuItems = [
 ];
 
 const userInfo = ref({
-  userName: 'unknown',
+  userName: '',
 });
 
 export default defineComponent({
@@ -64,12 +80,12 @@ export default defineComponent({
     const route = useRoute();
     const userStore = useUserStore();
     const learnSessionStore = useLearnSessionStore();
-    setInterval(() => {
-      userStore.retrieveUser().then(() => {
-        userInfo.value.userName =
-          userStore.user.firstName + ' ' + userStore.user.lastName;
-      });
-    }, 2000);
+
+    userStore.retrieveUser().then(() => {
+      userInfo.value.userName =
+        userStore.user.firstName + ' ' + userStore.user.lastName;
+    });
+
     watch(selectedItem, (newVal, oldVal) => {
       router.push(newVal);
     });
@@ -78,6 +94,9 @@ export default defineComponent({
       selectedItem,
       menuItems,
       learnSessionStore,
+      logout() {
+        location.href = '/logout';
+      },
       learnSessionStillOpen() {
         const sessionId = sessionStorage.getItem('learnSession');
         return (

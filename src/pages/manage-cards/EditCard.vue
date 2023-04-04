@@ -17,6 +17,7 @@
               <q-input
                 v-model="card.front"
                 type="textarea"
+                rows="3"
                 input-class="text-center"
                 style="background-color: white; font-size: large"
                 outlined
@@ -34,6 +35,7 @@
                 v-model="card.back"
                 outlined
                 type="textarea"
+                rows="3"
                 input-class="text-center"
                 :class="getGenderClass(card)"
                 style="font-size: large"
@@ -50,23 +52,22 @@
               </template>
             </div>
           </div>
+          <div class="row">
+            <div class="col-12">
+              <q-input
+                v-model="card.additionalInfos"
+                label="additional info / declination / conjugation"
+                outlined
+                type="textarea"
+              />
+            </div>
+          </div>
           <div class="q-mb-md row">
             <div class="col-12">
               <q-input
                 v-model="card.hint"
                 label="hint (can be displayed during learning)"
                 outlined
-              />
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-12">
-              <q-input
-                v-model="card.additionalInfos"
-                label="additional info / sentences"
-                rows="2"
-                outlined
-                type="textarea"
               />
             </div>
           </div>
