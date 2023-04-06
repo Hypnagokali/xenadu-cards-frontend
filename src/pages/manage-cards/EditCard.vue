@@ -12,7 +12,7 @@
               <span style="font-size: x-large">Front</span>
             </div>
           </div>
-          <div class="row q-pb-lg">
+          <div class="row q-pb-sm">
             <div class="col-12">
               <q-input
                 v-model="card.front"
@@ -25,11 +25,20 @@
             </div>
           </div>
           <div class="row">
+            <q-btn
+              outline
+              size="sm"
+              color="primary"
+              label="Alternatives (Front)"
+              @click="linkToAlternatives('front')"
+            ></q-btn>
+          </div>
+          <div class="row">
             <div class="col-12" style="text-align: center">
               <span style="font-size: x-large">Back</span>
             </div>
           </div>
-          <div class="row">
+          <div class="row q-pb-sm">
             <div class="col-12">
               <q-input
                 v-model="card.back"
@@ -41,6 +50,15 @@
                 style="font-size: large"
               />
             </div>
+          </div>
+          <div class="row q-pb-lg">
+            <q-btn
+              size="sm"
+              outline
+              color="primary"
+              label="Alternatives (Back)"
+              @click="linkToAlternatives('back')"
+            ></q-btn>
           </div>
           <div class="row">
             <div class="col-12 q-gutter-sm">
@@ -241,6 +259,16 @@ export default {
       cardSet,
       title,
       newLink,
+      linkToAlternatives(cardSide = 'back') {
+        router.push({
+          name: 'alternatives',
+          params: {
+            cardSetId,
+            cardId,
+            cardSide,
+          },
+        });
+      },
       addHelpfulLink() {
         if (newLink.value.empty) {
           return;

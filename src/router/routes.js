@@ -19,6 +19,11 @@ const routes = [
             path: ':cardSetId/:cardId',
             component: () => import('pages/manage-cards/EditCard'),
           },
+          {
+            path: ':cardSetId/:cardId/alternatives/:cardSide',
+            name: 'alternatives',
+            component: () => import('pages/manage-cards/EditAlternatives'),
+          },
         ],
       },
       {
