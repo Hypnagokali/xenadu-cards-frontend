@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { api } from 'src/boot/axios';
 
 export const useLearnSessionStore = defineStore('learnSessionStore', {
   state: () => ({
@@ -30,13 +31,29 @@ export const useLearnSessionStore = defineStore('learnSessionStore', {
     totalNumberOfCards(state) {
       return state.session.totalNumberOfCards;
     },
+    getAnswerResult(state) {
+      console.log('GET answerResult');
+      return state.session.answerResult;
+    },
     numberOfCardsPassed(state) {
       return state.session.numberOfCardsPassed;
     },
   },
 
   actions: {
+    destroy() {
+      if (this.session.learnSessionId != null) {
+        api
+          .post(
+            `/api/learn-session/${this.session.learnSessionId}/finish?cancel=true`
+          )
+          .then(() => console.log('destroyed ...'));
+      }
+      this.reset();
+    },
     reset() {
+      sessionStorage.removeItem('learnSession');
+
       this.session = {
         learnSessionId: null,
         cardSetId: -1,

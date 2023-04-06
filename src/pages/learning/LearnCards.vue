@@ -91,28 +91,16 @@
                       color="negative"
                     />
                   </template>
-                  <p class="text-h6">
-                    {{ expectedAnswer }}
-                  </p>
-                  <!-- <p>{{ additionalInfos() }}</p> -->
-                  <!-- <q-list bordered separator>
-                    <q-item
-                      clickable
-                      @click="openLink(hl.value)"
-                      v-for="(hl, index) in helpfulLinks()"
-                      :key="index"
-                    >
-                      <q-item-section>
-                        {{ hl.name }}
-                      </q-item-section>
-                    </q-item>
-                  </q-list> -->
+                  <p class="text-h6">"{{ answer }}" is not correct</p>
                 </q-banner>
               </q-card-section>
 
               <q-separator />
 
-              <q-card-section class="flex justify-center">
+              <q-card-section
+                class="flex justify-center"
+                v-if="state === states.WAIT_FOR_ANSWER"
+              >
                 <div class="container-90">
                   <q-input
                     input-class="text-center"
@@ -201,23 +189,33 @@
           color="primary"
           @click="close()"
         />
+        <div class="q-mr-xl" v-if="state === states.WRONG_ANSWER">
+          <q-btn
+            class="float-right"
+            icon-right="spellcheck"
+            label="Answer is also correct"
+            color="red-8"
+            @click="addAlternativeAnswer()"
+          />
+        </div>
+        <div>
+          <q-btn
+            v-if="
+              noMoreCardsLeft &&
+              state !== states.DONE &&
+              state !== states.NOTHING_TO_REPEAT
+            "
+            class="float-right"
+            icon-right="stars"
+            label="Finish"
+            color="primary"
+            @click="finish()"
+          />
+        </div>
         <q-btn
           v-if="
-            state !== states.WAIT_FOR_ANSWER &&
-            totalCards === cardsLearned &&
-            state !== states.DONE &&
-            state !== states.NOTHING_TO_REPEAT
-          "
-          class="float-right"
-          icon-right="stars"
-          label="Finish"
-          color="primary"
-          @click="finish()"
-        />
-        <q-btn
-          v-if="
-            state !== states.WAIT_FOR_ANSWER &&
-            state !== states.DONE &&
+            (state === states.CORRECT_ANSWER ||
+              state === states.WRONG_ANSWER) &&
             totalCards > cardsLearned
           "
           class="float-right"
@@ -240,7 +238,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useLearnSessionStore } from 'stores/learnSessionStore';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 import { api } from 'src/boot/axios';
@@ -251,9 +249,14 @@ import cardAttributes from 'src/composables/cardAttributes';
 const cardsLearned = ref(0);
 const totalCards = ref(100);
 const cardSetName = ref('');
+/* single card */
 const answer = ref('');
+const checkBackSide = ref(true);
 const isShowHint = ref(false);
 const expectedAnswer = ref('');
+const answerCommitted = ref(true);
+
+/* statistics */
 const statistics = ref({
   correctAnswers: 0,
   wrongAnswers: 0,
@@ -271,6 +274,7 @@ const states = {
   WAIT_FOR_ANSWER: 'WAIT_FOR_ANSWER',
   WRONG_ANSWER: 'WRONG_ANSWER',
   CORRECT_ANSWER: 'CORRECT_ANSWER',
+  WAIT_FOR_FINISH: 'WAIT_FOR_FINISH',
   DONE: 'DONE',
   NOTHING_TO_REPEAT: 'NOTHING_TO_REPEAT',
 };
@@ -299,7 +303,12 @@ export default {
     const route = useRoute();
     const cardSetId = route.params.cardSetId;
 
+    const noMoreCardsLeft = computed(
+      () => totalCards.value === cardsLearned.value
+    );
+
     const getLearnSessionFromServer = function (sessionId, onFailure) {
+      console.log('SessionId: ', sessionId);
       api
         .get(`/api/learn-session/${sessionId}/current`)
         .then((res) => {
@@ -308,6 +317,7 @@ export default {
           setValues(learnSessionStore.session);
           if (res.data.currentCard == null) {
             state.value = states.NOTHING_TO_REPEAT;
+            learnSessionStore.destroy();
           }
         })
         .catch((e) => {
@@ -348,7 +358,6 @@ export default {
     onMounted(() => {
       init();
 
-      // todo: check, why learnSessionStore.getCardSetId is not working :,(
       if (learnSessionStore.session.cardSetId < 1) {
         if (sessionId) {
           getLearnSessionFromServer(sessionId, function () {
@@ -366,23 +375,32 @@ export default {
           })
           .catch((e) => XenaduNotify.error('Card set could not be loaded'));
 
-        api
-          .get(`/api/learn-session/${sessionId}/current`)
-          .then((res) => {
-            learnSessionStore.setSession(res.data);
-            currentCard.value = res.data.currentCard;
-            setValues(learnSessionStore.session);
-            if (res.data.currentCard == null) {
-              state.value = states.NOTHING_TO_REPEAT;
-            }
-          })
-          .catch();
+        getLearnSessionFromServer(
+          learnSessionStore.learnSessionId,
+          function () {
+            XenaduNotify.error(
+              'Could not retrieve learn session from server :('
+            );
+          }
+        );
+        // api
+        //   .get(`/api/learn-session/${sessionId}/current`)
+        //   .then((res) => {
+        //     learnSessionStore.setSession(res.data);
+        //     currentCard.value = res.data.currentCard;
+        //     setValues(learnSessionStore.session);
+        //     if (res.data.currentCard == null) {
+        //       state.value = states.NOTHING_TO_REPEAT;
+        //     }
+        //   })
+        //   .catch();
       }
     });
 
     // console.table(learnSessionStore.session);
 
     return {
+      noMoreCardsLeft,
       isShowHint,
       cardsLearned,
       totalCards,
@@ -415,6 +433,74 @@ export default {
           return `Card correct answered for ${currentCard.value.repetitionState} times`;
         }
       },
+      addAlternativeAnswer() {
+        if (answer.value == null || answer.value.trim().length === 0) {
+          XenaduNotify.warning(
+            'Cannot add an empty answer to acceptable answers'
+          );
+          return;
+        }
+        console.log('------------------- ADD ALTERNATIVE ANSWER');
+        // add answer to list of alternatives
+        const answerResult = learnSessionStore.getAnswerResult;
+        console.log('Answer is also correct: ', answerResult);
+        api
+          .post(`/api/learn-session/${sessionId}/add-alternative`, answerResult)
+          .then((res) => {
+            learnSessionStore.setSession(res.data);
+            currentCard.value = res.data.currentCard;
+            setValues(learnSessionStore.session);
+            // cardLearned.value + 1 because the answer was not committed yet
+            if (cardsLearned.value + 1 < totalCards.value) {
+              console.log('do next');
+              this.next();
+            } else {
+              console.log('do finish');
+              this.finish();
+            }
+          });
+      },
+      commitAndNext() {
+        const answerResult = learnSessionStore.getAnswerResult;
+        api
+          .post(`/api/learn-session/${sessionId}/commit`, answerResult)
+          .then((res) => {
+            learnSessionStore.setSession(res.data);
+            setValues(learnSessionStore.session);
+            if (cardsLearned.value < totalCards.value) {
+              this.next();
+            } else {
+              this.finish();
+            }
+          });
+      },
+      // named intern because vue gives a warning when using underscore
+      internRetrieveCurrentCard() {
+        api
+          .get(`/api/learn-session/${sessionId}/current`)
+          .then((res) => {
+            state.value = states.WAIT_FOR_ANSWER;
+            learnSessionStore.setSession(res.data);
+            currentCard.value = res.data.currentCard;
+            setValues(learnSessionStore.session);
+          })
+          .catch(() => {
+            XenaduNotify.error('Could not retrieve current card');
+          });
+      },
+      commitAnswer(actionAfterCommit = () => {}) {
+        answerCommitted.value = true;
+        const answerResult = learnSessionStore.getAnswerResult;
+        console.log('do API call /commit');
+        api
+          .post(`/api/learn-session/${sessionId}/commit`, answerResult)
+          .then((res) => {
+            learnSessionStore.setSession(res.data);
+            setValues(learnSessionStore.session);
+            console.log('execute action after commit');
+            actionAfterCommit();
+          });
+      },
       next() {
         isShowHint.value = false;
         answer.value = '';
@@ -422,25 +508,23 @@ export default {
         console.log('learned: ' + cardsLearned.value);
         console.log('total: ' + totalCards.value);
         if (cardsLearned.value < totalCards.value) {
-          api
-            .get(`/api/learn-session/${sessionId}/current`)
-            .then((res) => {
-              state.value = states.WAIT_FOR_ANSWER;
-              learnSessionStore.setSession(res.data);
-              currentCard.value = res.data.currentCard;
-              setValues(learnSessionStore.session);
-            })
-            .catch();
+          if (!answerCommitted.value) {
+            this.commitAnswer(this.internRetrieveCurrentCard);
+          } else {
+            this.internRetrieveCurrentCard();
+          }
         }
       },
-      finish() {
-        sessionStorage.removeItem('learnSession');
+      // named intern because vue gives a warning when using underscore
+      internFinishLearnSession() {
+        console.log('internFinishLearnSession');
         api
           .post(`/api/learn-session/${sessionId}/finish`)
           .then((res) => {
             console.log('FINISH STATISTICS');
             console.log(res.data);
             learnSessionStore.setSession(res.data);
+            console.log('session set again ...');
             statistics.value = learnSessionStore.session.statistics;
             state.value = states.DONE;
             XenaduNotify.info('finished');
@@ -449,8 +533,18 @@ export default {
             XenaduNotify.error('Error: Could not finish the session');
           })
           .finally(() => {
+            console.log('RESET learnSessionStore');
             learnSessionStore.reset();
           });
+      },
+      finish() {
+        console.log('onFinish');
+        if (!answerCommitted.value) {
+          console.log('do commit');
+          this.commitAnswer(this.internFinishLearnSession);
+        } else {
+          this.internFinishLearnSession();
+        }
       },
       showHint() {
         const hint = learnSessionStore.session.currentCard?.hint;
@@ -474,9 +568,11 @@ export default {
         return links ? links : [];
       },
       checkAnswer() {
+        answerCommitted.value = false;
         api
           .post(`/api/learn-session/${sessionId}/check`, {
             answer: answer.value,
+            checkBackSide: checkBackSide.value,
           })
           .then((res) => {
             cardsLearned.value++;
@@ -484,6 +580,7 @@ export default {
             learnSessionStore.setSession(res.data);
             if (res.data.answerResult.isCorrect) {
               state.value = states.CORRECT_ANSWER;
+              answerCommitted.value = true;
             } else {
               state.value = states.WRONG_ANSWER;
             }

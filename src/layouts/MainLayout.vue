@@ -99,6 +99,7 @@ export default defineComponent({
       },
       learnSessionStillOpen() {
         const sessionId = sessionStorage.getItem('learnSession');
+        console.log('learnSessionStore', learnSessionStore.getCardSetId);
         return (
           (learnSessionStore.getCardSetId > 0 || sessionId) &&
           route.name !== 'startLearning'
@@ -124,13 +125,7 @@ export default defineComponent({
       doCloseSession() {
         const sessionId = sessionStorage.getItem('learnSession');
         // TODO: implement learnSessionApi
-        api
-          .post(`/api/learn-session/${sessionId}/finish?cancel=true`)
-          .then(() => console.log('cancelled'))
-          .finally(() => {
-            learnSessionStore.reset();
-            sessionStorage.removeItem('learnSession');
-          });
+        learnSessionStore.destroy();
       },
     };
   },
