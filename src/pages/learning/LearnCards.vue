@@ -78,7 +78,7 @@
                   <template v-slot:avatar>
                     <q-icon style="font-size: 4em" name="done" color="green" />
                   </template>
-                  <p class="text-h6">Correct Answer</p>
+                  <p class="text-h6">Your answer was correct :)</p>
                 </q-banner>
               </q-card-section>
 
@@ -449,7 +449,9 @@ export default {
           .then((res) => {
             learnSessionStore.setSession(res.data);
             currentCard.value = res.data.currentCard;
-            setValues(learnSessionStore.session);
+            // setValues(learnSessionStore.session);
+
+            XenaduNotify.info('Your answer was added as an alternative answer');
             // cardLearned.value + 1 because the answer was not committed yet
             if (cardsLearned.value + 1 < totalCards.value) {
               console.log('do next');
