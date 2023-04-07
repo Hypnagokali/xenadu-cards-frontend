@@ -40,3 +40,14 @@
 .light-header {
   margin: 1rem;
 }
+
+.alternative-answer {
+  width: 45vw;
+}
+
+@media (max-width: $breakpoint-xs-max) {
+  .alternative-answer {
+    width: 90vw;
+  }
+}
+

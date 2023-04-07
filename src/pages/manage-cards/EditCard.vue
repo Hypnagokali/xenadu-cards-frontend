@@ -2,7 +2,7 @@
   <q-page>
     <div>
       <h4 class="title_subtitle">{{ title }}</h4>
-      <h4 class="subtitle">...to card set '{{ cardSet.name }}'</h4>
+      <h4 class="subtitle">... Card set '{{ cardSet.name }}'</h4>
     </div>
     <div>
       <q-card style="max-width: 94vw">
@@ -12,7 +12,7 @@
               <span style="font-size: x-large">Front</span>
             </div>
           </div>
-          <div class="row q-pb-lg">
+          <div class="row q-pb-sm">
             <div class="col-12">
               <q-input
                 v-model="card.front"
@@ -25,11 +25,20 @@
             </div>
           </div>
           <div class="row">
+            <q-btn
+              outline
+              size="sm"
+              color="primary"
+              label="Alternatives (Front)"
+              @click="linkToAlternatives('front')"
+            ></q-btn>
+          </div>
+          <div class="row">
             <div class="col-12" style="text-align: center">
               <span style="font-size: x-large">Back</span>
             </div>
           </div>
-          <div class="row">
+          <div class="row q-pb-sm">
             <div class="col-12">
               <q-input
                 v-model="card.back"
@@ -42,6 +51,15 @@
               />
             </div>
           </div>
+          <div class="row q-pb-lg">
+            <q-btn
+              size="sm"
+              outline
+              color="primary"
+              label="Alternatives (Back)"
+              @click="linkToAlternatives('back')"
+            ></q-btn>
+          </div>
           <div class="row">
             <div class="col-12 q-gutter-sm">
               <q-checkbox v-model="card.noun" label="noun" />
@@ -53,7 +71,7 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-12">
+            <div class="col-12 q-mb-sm">
               <q-input
                 v-model="card.additionalInfos"
                 label="additional info / declination / conjugation"
@@ -73,24 +91,38 @@
           </div>
         </q-card-section>
         <q-card-section>
-          <div class="q-mb-md" v-for="(link, i) in card.helpfulLinks" :key="i">
-            <div class="q-mb-xs row" style="justify-content: end">
-              <q-btn @click="removeLink(i)" label="x"></q-btn>
-            </div>
-            <q-input
-              outlined
-              label="name of link"
-              type="text"
-              v-model="link.name"
-            />
-            <q-input outlined label="link" type="text" v-model="link.value" />
-          </div>
+          <q-card
+            class="q-mb-md"
+            v-for="(link, i) in card.helpfulLinks"
+            :key="i"
+          >
+            <q-card-section>
+              <div class="q-mb-xs row" style="justify-content: end">
+                <q-btn
+                  square
+                  flat
+                  size="sm"
+                  @click="removeLink(i)"
+                  icon="close"
+                ></q-btn>
+              </div>
+              <q-input
+                class="q-mb-sm"
+                outlined
+                label="name of link"
+                type="text"
+                v-model="link.name"
+              />
+              <q-input outlined label="link" type="text" v-model="link.value" />
+            </q-card-section>
+          </q-card>
 
           <!-- Input new helpful link -->
           <hr />
           <div>
             <strong>Add a new helpful link to this card</strong>
             <q-input
+              class="q-mb-sm"
               outlined
               label="name of the new link"
               type="text"
@@ -104,7 +136,7 @@
             />
             <q-btn
               @click="addHelpfulLink()"
-              class="bg-primary text-white float-right"
+              class="bg-primary text-white float-right q-mt-sm"
               label="Add link"
             />
           </div>
@@ -241,6 +273,16 @@ export default {
       cardSet,
       title,
       newLink,
+      linkToAlternatives(cardSide = 'back') {
+        router.push({
+          name: 'alternatives',
+          params: {
+            cardSetId,
+            cardId,
+            cardSide,
+          },
+        });
+      },
       addHelpfulLink() {
         if (newLink.value.empty) {
           return;
