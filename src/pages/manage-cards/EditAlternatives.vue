@@ -1,31 +1,36 @@
 <template>
   <q-page class="q-mt-lg">
-    <div class="row">
-      <h4>Alternatives to "{{ word }}"</h4>
+    <div>
+      <h4 class="title_subtitle">Alternatives for</h4>
+      <h4 class="subtitle">... '{{ word }}'</h4>
     </div>
-    <div class="row">
-      <q-list bordered separator>
-        <q-item
-          class="alternative-answer"
-          v-for="alternative in alternatives"
-          :key="alternative.id"
-        >
-          <q-item-section>
-            <div class="row">
-              <div class="col-10">{{ alternative.answer }}</div>
-              <div class="col-2">
-                <q-btn
-                  size="sm"
-                  class="float-right"
-                  icon-right="delete"
-                  @click="remove(alternative.id)"
-                ></q-btn>
-              </div>
-            </div>
-          </q-item-section>
-        </q-item>
-      </q-list>
-    </div>
+    <q-card style="max-width: 94vw; min-height: 60vh">
+      <q-card-section>
+        <div class="row">
+          <q-list bordered separator>
+            <q-item
+              class="alternative-answer"
+              v-for="alternative in alternatives"
+              :key="alternative.id"
+            >
+              <q-item-section>
+                <div class="row">
+                  <div class="col-10">{{ alternative.answer }}</div>
+                  <div class="col-2">
+                    <q-btn
+                      size="sm"
+                      class="float-right"
+                      icon-right="delete"
+                      @click="remove(alternative.id)"
+                    ></q-btn>
+                  </div>
+                </div>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </div>
+      </q-card-section>
+    </q-card>
   </q-page>
 </template>
 
@@ -87,7 +92,9 @@ export default {
       alternatives,
       remove(altId) {
         alternativeCall.deleteById(altId).then(() => {
-          XenaduNotify.info('removed');
+          const index = alternatives.value.findIndex((alt) => alt.id === altId);
+          alternatives.value.splice(index, 1);
+          XenaduNotify.info('Alternative answer removed');
         });
       },
     };
