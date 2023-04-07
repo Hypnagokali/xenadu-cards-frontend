@@ -1,7 +1,7 @@
 <template>
   <q-page>
-    <div>
-      <h4>You are learning: {{ cardSetName }}</h4>
+    <div class="text-center q-mt-md">
+      <strong>{{ cardSetName }}</strong>
     </div>
     <div class="container">
       <div v-if="state !== states.DONE && state !== states.NOTHING_TO_REPEAT">
@@ -91,7 +91,9 @@
                       color="negative"
                     />
                   </template>
-                  <p class="text-h6">"{{ answer }}" is not correct</p>
+                  <p class="text-h6" sytle="word-wrap: break-word;">
+                    "{{ answer }}" is not correct
+                  </p>
                 </q-banner>
               </q-card-section>
 
@@ -189,41 +191,46 @@
           color="primary"
           @click="close()"
         />
-        <div class="q-mr-xl" v-if="state === states.WRONG_ANSWER">
-          <q-btn
-            class="float-right"
-            icon-right="spellcheck"
-            label="Answer is also correct"
-            color="red-8"
-            @click="addAlternativeAnswer()"
-          />
+
+        <div class="row justify-center">
+          <div class="col-sm-6 q-pr-sm" v-if="state === states.WRONG_ANSWER">
+            <q-btn
+              class="float-right"
+              icon-right="spellcheck"
+              label="Also correct"
+              color="red-8"
+              @click="addAlternativeAnswer()"
+            />
+          </div>
+          <div class="col-sm-6">
+            <q-btn
+              v-if="
+                noMoreCardsLeft &&
+                state !== states.DONE &&
+                state !== states.NOTHING_TO_REPEAT
+              "
+              class="float-right"
+              icon-right="stars"
+              label="Finish"
+              color="primary"
+              @click="finish()"
+            />
+          </div>
+          <div class="col-sm-6">
+            <q-btn
+              v-if="
+                (state === states.CORRECT_ANSWER ||
+                  state === states.WRONG_ANSWER) &&
+                totalCards > cardsLearned
+              "
+              class="float-right"
+              icon-right="fast_forward"
+              label="Next"
+              color="primary"
+              @click="next()"
+            />
+          </div>
         </div>
-        <div>
-          <q-btn
-            v-if="
-              noMoreCardsLeft &&
-              state !== states.DONE &&
-              state !== states.NOTHING_TO_REPEAT
-            "
-            class="float-right"
-            icon-right="stars"
-            label="Finish"
-            color="primary"
-            @click="finish()"
-          />
-        </div>
-        <q-btn
-          v-if="
-            (state === states.CORRECT_ANSWER ||
-              state === states.WRONG_ANSWER) &&
-            totalCards > cardsLearned
-          "
-          class="float-right"
-          icon-right="fast_forward"
-          label="Next"
-          color="primary"
-          @click="next()"
-        />
         <q-btn
           v-if="state === states.DONE"
           class="float-right"
