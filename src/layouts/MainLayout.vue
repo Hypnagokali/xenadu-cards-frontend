@@ -2,10 +2,11 @@
   <q-layout view="lHh Lpr lFf">
     <q-header elevated>
       <q-toolbar>
-        <q-toolbar-title>x - cards</q-toolbar-title>
+        <q-toolbar-title>x-cards</q-toolbar-title>
         <q-space />
         <div class="q-pa-md">
           <q-btn-dropdown
+            size="sm"
             v-if="
               userInfo.userName != null && userInfo.userName.trim().length > 0
             "
