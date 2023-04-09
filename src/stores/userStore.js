@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { api } from 'src/boot/axios';
+import { api } from 'src/boot/api';
 
 export const useUserStore = defineStore('userStore', {
   state: () => ({
@@ -8,13 +8,13 @@ export const useUserStore = defineStore('userStore', {
       email: '',
       firstName: '',
       lastName: '',
-    }
+    },
   }),
 
   getters: {
-    getUser (state) {
+    getUser(state) {
       return state.user;
-    }
+    },
   },
 
   actions: {
@@ -35,17 +35,17 @@ export const useUserStore = defineStore('userStore', {
     },
     retrieveUser() {
       return new Promise((resolve, reject) => {
-        api.get('/api/user-info')
-          .then(userInfo => {
+        api
+          .get('/api/user-info')
+          .then((userInfo) => {
             console.log('User fetched');
-            resolve(this.user = userInfo.data);
+            resolve((this.user = userInfo.data));
           })
-          .catch(e => {
+          .catch((e) => {
             console.log('Could not retrieve user: ', e);
             reject(e);
-        });
+          });
       });
-
-    }
-  }
-})
+    },
+  },
+});

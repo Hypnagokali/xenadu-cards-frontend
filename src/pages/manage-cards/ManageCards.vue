@@ -121,7 +121,7 @@
 import { ref, onMounted } from 'vue';
 import { useUserStore } from 'stores/userStore';
 import { useRouter, useRoute } from 'vue-router';
-import { api } from 'boot/axios';
+import { api } from 'boot/api';
 
 const columns = [
   {

@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import { api } from 'src/boot/axios';
+import { api } from 'src/boot/api';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';

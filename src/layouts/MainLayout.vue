@@ -45,18 +45,40 @@
           <router-view />
         </div>
       </div>
+
+      <q-dialog v-model="sessionExpired">
+        <q-card>
+          <q-card-section>
+            <div class="text-h6">Alert</div>
+          </q-card-section>
+
+          <q-card-section class="q-pt-none">
+            Your session has expired. Please login again.
+          </q-card-section>
+
+          <q-card-actions>
+            <q-btn
+              flat
+              label="Login / Refresh"
+              color="primary"
+              @click="reloadLocation()"
+              v-close-popup
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
     </q-page-container>
   </q-layout>
 </template>
 
 <script>
 import BackToLearnSession from 'src/components/BackToLearnSession.vue';
-import { defineComponent, ref, watch, onUpdated } from 'vue';
+import { defineComponent, ref, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from 'stores/userStore';
 import { useLearnSessionStore } from 'stores/learnSessionStore';
 import { retrieveLearnSession } from 'src/composables/retrieveLearnSession';
-import { api } from 'src/boot/axios';
+import keycloakApi from 'boot/keycloak-boot';
 
 const menuItems = [
   {
@@ -73,30 +95,47 @@ const userInfo = ref({
   userName: '',
 });
 
+let pingRequestInterval = null;
+
 export default defineComponent({
   name: 'MainLayout',
   setup() {
+    const sessionExpired = ref(false);
     const selectedItem = ref({});
     const router = useRouter();
     const route = useRoute();
     const userStore = useUserStore();
     const learnSessionStore = useLearnSessionStore();
 
+    // doAuth().then((token) => {
     userStore.retrieveUser().then(() => {
       userInfo.value.userName =
         userStore.user.firstName + ' ' + userStore.user.lastName;
     });
+    // });
 
     watch(selectedItem, (newVal, oldVal) => {
       router.push(newVal);
     });
     return {
       userInfo,
+      sessionExpired,
       selectedItem,
       menuItems,
       learnSessionStore,
+      reloadLocation() {
+        window.location.reload();
+      },
       logout() {
-        location.href = '/logout';
+        if (keycloakApi.keycloak != null) {
+          keycloakApi.keycloak.logout().then(() => {
+            keycloakApi.removeToken();
+            location.reload();
+          });
+        } else {
+          console.log('keycloak is null');
+        }
+        // location.href = '/logout';
       },
       learnSessionStillOpen() {
         const sessionId = sessionStorage.getItem('learnSession');

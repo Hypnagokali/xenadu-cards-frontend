@@ -36,7 +36,7 @@
 
 <script>
 import { ref } from 'vue';
-import { api } from 'src/boot/axios';
+import { api } from 'src/boot/api';
 import { useRoute } from 'vue-router';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 import { getCardSet } from 'src/composables/api/cardApi';

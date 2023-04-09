@@ -1,4 +1,4 @@
-import { api } from 'src/boot/axios';
+import { api } from 'boot/api';
 
 const extractResponse = function (axiosReq) {
   return new Promise((resolve, reject) => {

@@ -1,4 +1,4 @@
-import { api } from 'src/boot/axios';
+import { api } from 'boot/api';
 
 export const retrieveLearnSession = function (sessionId, learnSessionStore) {
   return new Promise((resolve, reject) => {

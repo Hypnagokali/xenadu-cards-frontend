@@ -167,7 +167,7 @@
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 import { defineComponent, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { api } from 'boot/axios';
+import { api } from 'boot/api';
 import { useUserStore } from 'stores/userStore';
 
 // Refs and constants

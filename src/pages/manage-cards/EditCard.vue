@@ -157,7 +157,7 @@
 <script>
 import { useRoute, useRouter } from 'vue-router';
 import { ref, onMounted, watch } from 'vue';
-import { api } from 'src/boot/axios';
+import { api } from 'src/boot/api';
 import { useUserStore } from 'stores/userStore';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 

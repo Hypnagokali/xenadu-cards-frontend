@@ -193,7 +193,7 @@
         />
 
         <div class="row justify-center">
-          <div class="col-sm-6 q-pr-sm" v-if="state === states.WRONG_ANSWER">
+          <div class="q-pr-sm" v-if="state === states.WRONG_ANSWER">
             <q-btn
               class="float-right"
               icon-right="spellcheck"
@@ -202,7 +202,7 @@
               @click="addAlternativeAnswer()"
             />
           </div>
-          <div class="col-sm-6">
+          <div>
             <q-btn
               v-if="
                 noMoreCardsLeft &&
@@ -216,7 +216,7 @@
               @click="finish()"
             />
           </div>
-          <div class="col-sm-6">
+          <div>
             <q-btn
               v-if="
                 (state === states.CORRECT_ANSWER ||
@@ -248,7 +248,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useLearnSessionStore } from 'stores/learnSessionStore';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
-import { api } from 'src/boot/axios';
+import { api } from 'src/boot/api';
 import { useRoute, useRouter } from 'vue-router';
 import { openURL } from 'quasar';
 import cardAttributes from 'src/composables/cardAttributes';
@@ -437,7 +437,7 @@ export default {
         if (currentCard.value.repetitionState === 0) {
           return 'New Card';
         } else {
-          return `Card correct answered for ${currentCard.value.repetitionState} times`;
+          return `Card has repetition state ${currentCard.value.repetitionState}.`;
         }
       },
       addAlternativeAnswer() {

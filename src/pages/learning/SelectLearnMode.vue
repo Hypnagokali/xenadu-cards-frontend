@@ -83,7 +83,7 @@
 
 <script>
 import { ref } from 'vue';
-import { api } from 'src/boot/axios';
+import { api } from 'src/boot/api';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 import { useRoute, useRouter } from 'vue-router';
 import { useLearnSessionStore } from 'stores/learnSessionStore';
