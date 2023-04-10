@@ -16,7 +16,7 @@ api.interceptors.response.use(
   },
   (err) => {
     if (err.response.status === 401) {
-      // location.reload();
+      location.reload();
     }
     return err;
   }
