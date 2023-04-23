@@ -7,6 +7,12 @@
       <div class="row q-mb-sm q-mr-sm">
         <div class="col-12">
           <q-btn
+            label="Manage Lessons"
+            icon="view_list"
+            color="primary"
+            :to="{ name: 'manageLessons', params: { cardSetId } }"
+          />
+          <q-btn
             class="float-right"
             label="New Card"
             @click="loadCard(newCard)"
@@ -236,6 +242,7 @@ export default {
     };
 
     return {
+      cardSetId,
       selectedCard,
       confirmDelete,
       filter: ref(''),

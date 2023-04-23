@@ -16,6 +16,11 @@ const routes = [
             component: () => import('pages/manage-cards/ManageCards'),
           },
           {
+            path: ':cardSetId/lessons',
+            name: 'manageLessons',
+            component: () => import('pages/manage-cards/ManageLessons.vue'),
+          },
+          {
             path: ':cardSetId/:cardId',
             component: () => import('pages/manage-cards/EditCard'),
           },

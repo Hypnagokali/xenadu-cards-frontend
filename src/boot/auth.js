@@ -1,13 +1,14 @@
 import { boot } from 'quasar/wrappers';
-import { api } from './api';
+import { api, isLive } from './api';
 import keycloakApi from './keycloak-boot';
 import Keycloak from 'keycloak-js';
-import axios from 'axios';
 
 console.log('boot axios and auth ...');
 export default boot(async ({ app /*router, store*/ }) => {
   // init keycloakApi with keycloak instance
   keycloakApi.keycloak = null;
+
+  if (!isLive) return;
 
   const auth = {
     tokenName: 'access_token',
@@ -76,9 +77,4 @@ export default boot(async ({ app /*router, store*/ }) => {
         console.error('Something went wrong. Token not refreshed :(', e);
       });
   }, 30000);
-
-  return {
-    axios,
-    auth,
-  };
 });
