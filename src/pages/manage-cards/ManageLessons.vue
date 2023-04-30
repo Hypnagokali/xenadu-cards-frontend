@@ -20,10 +20,15 @@
           :rows="lessons"
           row-key="id"
         >
-          <template v-slot:body-cell-actions>
+          <template v-slot:body-cell-actions="rowProps">
             <q-td>
               <q-btn class="float-right" flat icon="delete" />
-              <q-btn class="float-right" flat icon="edit" />
+              <q-btn
+                class="float-right"
+                flat
+                icon="edit"
+                @click="openEdit(rowProps)"
+              />
               <q-btn class="float-right" flat icon="source" />
             </q-td>
           </template>
@@ -32,6 +37,8 @@
     </div>
     <create-update-dialog
       @reset="reset()"
+      @create="create()"
+      @update="update()"
       resource="Lesson"
       :id="0"
       :show="showCreateUpdateDialog"
@@ -46,8 +53,10 @@
 <script>
 import { api } from 'src/boot/api';
 import CreateUpdateDialog from 'src/components/CreateUpdateDialog.vue';
-import { useRoute } from 'vue-router';
+import Lesson from 'src/classes/lesson';
+import { createLesson, getLessons } from 'src/composables/api/lessonApi';
 import { ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 
 const columns = [
@@ -75,23 +84,9 @@ const columns = [
   },
 ];
 
-const lessons = ref([
-  {
-    id: 23,
-    name: 'Lesson 1',
-    cards: 50,
-  },
-  {
-    id: 89,
-    name: 'Lessons 2',
-    cards: 4,
-  },
-]);
+const lessons = ref([]);
 
-const selectedLesson = ref({
-  id: 0,
-  name: '',
-});
+const selectedLesson = ref(new Lesson());
 
 export default {
   name: 'ManageLessons',
@@ -104,13 +99,15 @@ export default {
     const cardSetId = route.params.cardSetId;
 
     const showCreateUpdateDialog = ref(false);
-    api
-      .get(`/api/card-sets/${cardSetId}/lessons`)
-      .then((res) => {
-        lessons.value = res.data;
+
+    getLessons(cardSetId)
+      .retrieve()
+      .then((retrievedLessons) => {
+        lessons.value = retrievedLessons;
       })
       .catch((e) => {
-        XenaduNotify.error('could not retrieve lessons');
+        console.log(e);
+        XenaduNotify.error('Could not retrieve lessons');
       });
 
     return {
@@ -118,8 +115,24 @@ export default {
       lessons,
       selectedLesson,
       showCreateUpdateDialog,
+      openEdit(rowProps) {},
       reset() {
+        selectedLesson.value = new Lesson();
         showCreateUpdateDialog.value = false;
+      },
+      update() {
+        console.log('do update');
+      },
+      create() {
+        createLesson(cardSetId)
+          .create(selectedLesson.value)
+          .then((newLesson) => {
+            lessons.value.push(newLesson);
+          })
+          .catch((err) => {
+            console.log(err);
+          })
+          .finally(() => this.reset());
       },
     };
   },

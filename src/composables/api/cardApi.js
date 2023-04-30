@@ -1,17 +1,11 @@
 import { api } from 'boot/api';
-
-const extractResponse = function (axiosReq) {
-  return new Promise((resolve, reject) => {
-    axiosReq
-      .then((res) => {
-        resolve(res.data);
-      })
-      .catch((e) => reject(e));
-  });
-};
+import { extractResponse } from 'src/composables/api/extractResponse';
 
 const getCardSet = function (cardSetId) {
   return {
+    retrieve: function () {
+      return extractResponse(api.get(`/api/card-sets/${cardSetId}`));
+    },
     getCard: function (cardId) {
       return {
         retrieve: function () {
