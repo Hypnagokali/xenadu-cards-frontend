@@ -33,30 +33,34 @@
 import { defineProps, ref, computed } from 'vue';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 
+// TODO: give the whole object to the dialog.
 const props = defineProps({
   resource: String,
   id: Number,
   show: Boolean,
 });
 
+const emit = defineEmits(['reset', 'create', 'update']);
+
 const isShow = computed(() => {
   return props.show;
 });
-
-const emit = defineEmits(['reset', 'create', 'update']);
 
 const actions = {
   CREATE: 'create',
   UPDATE: 'update',
 };
 
-let resourceAction = actions.CREATE;
+const resourceAction = computed(() => {
+  console.log(props.id);
+  if (props.id == null) {
+    XenaduNotify.error('Something is wrong with the resource');
+  } else if (props.id > 0) {
+    return actions.UPDATE;
+  }
 
-if (props.id == null) {
-  XenaduNotify.error('Something is wrong with the resource');
-} else if (props.id > 0) {
-  resourceAction = actions.UPDATE;
-}
+  return actions.CREATE;
+});
 
 const reset = function () {
   emit('reset');

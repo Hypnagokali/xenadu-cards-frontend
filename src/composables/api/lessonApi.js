@@ -13,6 +13,37 @@ const getLessons = function (cardSetId) {
   };
 };
 
+const assertTypeLesson = function (obj) {
+  if (!obj instanceof Lesson) {
+    throw new Error('Lesson must be instance of Lesson');
+  }
+};
+
+const deleteLesson = function (cardSetId) {
+  return {
+    delete: function (lesson) {
+      assertTypeLesson(lesson);
+
+      return extractResponse(
+        api.delete(`/api/card-sets/${cardSetId}/lessons/${lesson.id}`)
+      );
+    },
+  };
+};
+
+const updateLesson = function (cardSetId) {
+  return {
+    update: function (lesson) {
+      assertTypeLesson(lesson);
+
+      return extractResponse(
+        api.put(`/api/card-sets/${cardSetId}/lessons/${lesson.id}`, lesson),
+        Lesson
+      );
+    },
+  };
+};
+
 const createLesson = function (cardSetId) {
   return {
     create: function (lesson) {
@@ -27,4 +58,4 @@ const createLesson = function (cardSetId) {
   };
 };
 
-export { createLesson, getLessons };
+export { createLesson, updateLesson, getLessons, deleteLesson };

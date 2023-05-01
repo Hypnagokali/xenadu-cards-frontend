@@ -22,7 +22,7 @@ const deserialize = function (data, classType) {
     const instance = new classType();
     for (let attr in data) {
       if (instance.hasOwnProperty(attr)) {
-        instance[attr] = obj[attr];
+        instance[attr] = data[attr];
       }
     }
 

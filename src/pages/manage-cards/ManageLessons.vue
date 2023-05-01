@@ -22,7 +22,12 @@
         >
           <template v-slot:body-cell-actions="rowProps">
             <q-td>
-              <q-btn class="float-right" flat icon="delete" />
+              <q-btn
+                class="float-right"
+                flat
+                icon="delete"
+                @click="openConfirmDelete(rowProps)"
+              />
               <q-btn
                 class="float-right"
                 flat
@@ -35,12 +40,21 @@
         </q-table>
       </div>
     </div>
+    <confirm-dialog
+      :show="showConfirmDelete"
+      :confirm-message="`Do you want to delete the lesson with name: ${selectedLesson.name}`"
+      warning="This will NOT delete the cards inside this lesson."
+      confirm-label="Delete"
+      cancel-label="Cancel"
+      @on-cancel="reset()"
+      @on-confirm="doDelete()"
+    ></confirm-dialog>
     <create-update-dialog
       @reset="reset()"
       @create="create()"
       @update="update()"
       resource="Lesson"
-      :id="0"
+      :id="selectedLesson.id"
       :show="showCreateUpdateDialog"
     >
       <template v-slot:inputElements>
@@ -51,10 +65,15 @@
 </template>
 
 <script>
-import { api } from 'src/boot/api';
+import ConfirmDialog from 'src/components/ConfirmDialog.vue';
 import CreateUpdateDialog from 'src/components/CreateUpdateDialog.vue';
 import Lesson from 'src/classes/lesson';
-import { createLesson, getLessons } from 'src/composables/api/lessonApi';
+import {
+  createLesson,
+  getLessons,
+  updateLesson,
+  deleteLesson,
+} from 'src/composables/api/lessonApi';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
@@ -85,13 +104,13 @@ const columns = [
 ];
 
 const lessons = ref([]);
-
 const selectedLesson = ref(new Lesson());
 
 export default {
   name: 'ManageLessons',
   components: {
     CreateUpdateDialog,
+    ConfirmDialog,
   },
 
   setup() {
@@ -99,6 +118,7 @@ export default {
     const cardSetId = route.params.cardSetId;
 
     const showCreateUpdateDialog = ref(false);
+    const showConfirmDelete = ref(false);
 
     getLessons(cardSetId)
       .retrieve()
@@ -111,17 +131,66 @@ export default {
       });
 
     return {
+      showConfirmDelete,
       columns,
       lessons,
       selectedLesson,
       showCreateUpdateDialog,
-      openEdit(rowProps) {},
+      openEdit(rowProps) {
+        selectedLesson.value = rowProps.row;
+        showCreateUpdateDialog.value = true;
+      },
+      doDelete() {
+        console.log('do delete');
+        deleteLesson(cardSetId)
+          .delete(selectedLesson.value)
+          .then(() => {
+            XenaduNotify.info('Lesson deleted');
+            const lessonIndex = lessons.value.findIndex(
+              (l) => l.id === selectedLesson.value.id
+            );
+
+            if (lessonIndex >= 0) {
+              lessons.value.splice(lessonIndex, 1);
+            }
+          })
+          .catch(() => {
+            XenaduNotify.error('Could not delete Lesson');
+          })
+          .finally(() => {
+            this.reset();
+          });
+      },
       reset() {
         selectedLesson.value = new Lesson();
         showCreateUpdateDialog.value = false;
+        showConfirmDelete.value = false;
+      },
+      openConfirmDelete(rowProps) {
+        selectedLesson.value = rowProps.row;
+        showConfirmDelete.value = true;
       },
       update() {
         console.log('do update');
+        updateLesson(cardSetId)
+          .update(selectedLesson.value)
+          .then((updatedLesson) => {
+            const index = lessons.value.findIndex(
+              (l) => l.id === updatedLesson.id
+            );
+
+            if (index >= 0) {
+              lessons.value.splice(index, 1, updatedLesson);
+            }
+            XenaduNotify.info('Updated');
+          })
+          .catch((e) => {
+            XenaduNotify.error('Could not update lesson :(');
+          })
+          .finally(() => {
+            this.reset();
+          });
+        // then and catch
       },
       create() {
         createLesson(cardSetId)
