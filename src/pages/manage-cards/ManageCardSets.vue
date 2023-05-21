@@ -1,7 +1,7 @@
 <template>
   <q-page>
     <div>
-      <h3>Manage Card Sets</h3>
+      <h5>Manage Card Sets</h5>
     </div>
     <div class="row q-mb-sm q-mr-sm">
       <div class="col-12">

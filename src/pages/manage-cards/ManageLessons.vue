@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3>Manage Lessons</h3>
+    <h5>Manage Lessons</h5>
 
     <div class="row q-mb-sm q-mr-sm">
       <div class="col-12">
@@ -15,7 +15,7 @@
       <div class="col-md-12">
         <q-table
           :grid="$q.screen.lt.sm"
-          title="Card-Sets"
+          title="Lessons"
           :columns="columns"
           :rows="lessons"
           row-key="id"
@@ -34,8 +34,53 @@
                 icon="edit"
                 @click="openEdit(rowProps)"
               />
-              <q-btn class="float-right" flat icon="source" />
+              <q-btn
+                class="float-right"
+                flat
+                icon="source"
+                @click="editCardsInLesson(rowProps)"
+              >
+                <q-tooltip>
+                  Creates a new card and assignes it to this lesson
+                </q-tooltip>
+              </q-btn>
             </q-td>
+          </template>
+          <template v-slot:item="props">
+            <div class="q-mb-md" style="width: 90vw">
+              <q-card @click="editCardsInLesson(props)">
+                <div class="row">
+                  <div class="col-8">
+                    <q-card-section>
+                      <strong>{{ props.row.name }}</strong>
+                    </q-card-section>
+                    <q-card-section>
+                      Cards: {{ props.row.cards }}
+                    </q-card-section>
+                  </div>
+                  <div class="col-2">
+                    <q-card-section>
+                      <q-btn
+                        class="float-right"
+                        flat
+                        icon="edit"
+                        @click.stop="openEdit(props)"
+                      />
+                    </q-card-section>
+                  </div>
+                  <div class="col-2">
+                    <q-card-section>
+                      <q-btn
+                        class="float-right"
+                        flat
+                        icon="delete"
+                        @click.stop="openConfirmDelete(props)"
+                      />
+                    </q-card-section>
+                  </div>
+                </div>
+              </q-card>
+            </div>
           </template>
         </q-table>
       </div>
@@ -136,6 +181,14 @@ export default {
       lessons,
       selectedLesson,
       showCreateUpdateDialog,
+      editCardsInLesson(rowProps) {
+        console.log(
+          'Edit cards in CardSet: ' +
+            cardSetId +
+            ' for lesson: ' +
+            rowProps.row.id
+        );
+      },
       openEdit(rowProps) {
         selectedLesson.value = rowProps.row;
         showCreateUpdateDialog.value = true;

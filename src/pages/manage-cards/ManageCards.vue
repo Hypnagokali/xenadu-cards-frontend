@@ -1,7 +1,7 @@
 <template>
   <q-page>
     <div>
-      <h3>Manage Cards: {{ cardSet.name }}</h3>
+      <h5>Manage Cards: {{ cardSet.name }}</h5>
     </div>
     <div>
       <div class="row q-mb-sm q-mr-sm">
