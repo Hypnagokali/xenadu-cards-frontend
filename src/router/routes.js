@@ -12,16 +12,28 @@ const routes = [
             component: () => import('pages/manage-cards/ManageCardSets'),
           },
           {
-            path: ':cardSetId',
+            path: ':cardSetId/cards',
+            name: 'manageCards',
             component: () => import('pages/manage-cards/ManageCards'),
           },
           {
             path: ':cardSetId/lessons',
             name: 'manageLessons',
-            component: () => import('pages/manage-cards/ManageLessons.vue'),
+            component: () => import('pages/manage-cards/ManageLessons'),
           },
           {
-            path: ':cardSetId/:cardId',
+            path: ':cardSetId/lessons/:lessonId/cards',
+            name: 'manageCardsInLesson',
+            component: () => import('pages/manage-cards/ManageCards'),
+          },
+          {
+            path: ':cardSetId/cards/:cardId',
+            name: 'editCard',
+            component: () => import('pages/manage-cards/EditCard'),
+          },
+          {
+            path: ':cardSetId/lessons/:lessonId/cards/:cardId',
+            name: 'editCardInLesson',
             component: () => import('pages/manage-cards/EditCard'),
           },
           {

@@ -26,6 +26,7 @@
           </div>
           <div class="row">
             <q-btn
+              v-if="card.id > 0"
               outline
               size="sm"
               color="primary"
@@ -53,6 +54,7 @@
           </div>
           <div class="row q-pb-lg">
             <q-btn
+              v-if="card.id > 0"
               size="sm"
               outline
               color="primary"
@@ -227,10 +229,17 @@ export default {
     const cardSetId = parseInt(route.params.cardSetId);
     const cardId = parseInt(route.params.cardId);
 
+    const lessonId = route.params.lessonId;
+    const isLesson = !!lessonId;
+
     const title = cardId === 0 ? 'Add Card' : 'Edit Card';
     console.log(cardId === 0);
 
     onMounted(() => {
+      if (isLesson) {
+        console.log('--- Lesson View ---');
+      }
+
       userStore
         .getCurrentOrFetchUser()
         .then((fetchedUser) => {
@@ -309,26 +318,44 @@ export default {
           return;
         }
 
+        const routeAfterSafe = isLesson ? 'manageCardsInLesson' : 'manageCards';
+
         if (cardId > 0) {
+          // PUT
           api
-            .put(`/api/card-sets/${cardSetId}/cards/${cardId}`, card.value)
-            .then(() => {
-              router.push(`/manage-card-sets/${cardSetId}`);
+            .post(`/api/card-sets/${cardSetId}/cards/${cardId}}`, card.value)
+            .then((res) => {
+              router.push({ name: routeAfterSafe, params: { cardSetId } });
             })
-            .catch((e) => {
-              console.log(e);
-              console.error('error');
+            .catch(() => {
+              XenaduNotify.error('Could not update card :(');
             });
         } else {
-          card.value.cardSetId = cardSetId;
+          // POST and if lesson assign to lesson
           api
             .post(`/api/card-sets/${cardSetId}/cards`, card.value)
-            .then(() => {
-              router.push(`/manage-card-sets/${cardSetId}`);
+            .then((res) => {
+              if (isLesson) {
+                api
+                  .post(
+                    `/api/card-sets/${cardSetId}/lessons/${lessonId}/assign/${res.data.id}`
+                  )
+                  .then(() => {
+                    router.push({
+                      name: routeAfterSafe,
+                      params: { cardSetId },
+                    });
+                  })
+                  .catch(() => {
+                    XenaduNotify.error('Could not assign card to lesson.');
+                  });
+              } else {
+                router.push({ name: routeAfterSafe, params: { cardSetId } });
+              }
             })
             .catch((e) => {
               console.log(e);
-              console.error('error');
+              XenaduNotify.error('Could not create card :(');
             });
         }
       },

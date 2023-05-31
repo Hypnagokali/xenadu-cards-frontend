@@ -120,7 +120,7 @@ import {
   deleteLesson,
 } from 'src/composables/api/lessonApi';
 import { ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 
 const columns = [
@@ -160,6 +160,7 @@ export default {
 
   setup() {
     const route = useRoute();
+    const router = useRouter();
     const cardSetId = route.params.cardSetId;
 
     const showCreateUpdateDialog = ref(false);
@@ -182,12 +183,10 @@ export default {
       selectedLesson,
       showCreateUpdateDialog,
       editCardsInLesson(rowProps) {
-        console.log(
-          'Edit cards in CardSet: ' +
-            cardSetId +
-            ' for lesson: ' +
-            rowProps.row.id
-        );
+        router.push({
+          name: 'manageCardsInLesson',
+          params: { cardSetId, lessonId: rowProps.row.id },
+        });
       },
       openEdit(rowProps) {
         selectedLesson.value = rowProps.row;

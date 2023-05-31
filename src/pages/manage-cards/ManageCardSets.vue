@@ -287,7 +287,8 @@ export default defineComponent({
     const router = useRouter();
 
     const showCards = function (cardSet) {
-      router.push(`/manage-card-sets/${cardSet.id}`);
+      router.push({ name: 'manageCards', params: { cardSetId: cardSet.id } });
+      // router.push(`/manage-card-sets/${cardSet.id}`);
     };
 
     return {

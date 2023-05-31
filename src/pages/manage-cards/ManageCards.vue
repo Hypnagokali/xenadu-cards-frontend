@@ -202,6 +202,10 @@ export default {
     const router = useRouter();
     const route = useRoute();
     const cardSetId = route.params.cardSetId;
+    // if managing cards of card set in a lesson:
+    const lessonId = route.params.lessonId;
+    const isLesson = !!lessonId;
+
     const showEditDialog = ref(false);
 
     // TODO: GET /card-sets/{cardSetId}
@@ -210,6 +214,9 @@ export default {
     });
 
     onMounted(() => {
+      if (isLesson) {
+        console.log('--- Lesson View ---');
+      }
       userStore
         .getCurrentOrFetchUser()
         .then((fetchedUser) => {
@@ -223,8 +230,10 @@ export default {
             })
             .catch((err) => console.log(err));
 
+          const lessonEndpoint = isLesson ? `lessons/${lessonId}/` : '';
+
           api
-            .get(`/api/card-sets/${cardSetId}/cards`)
+            .get(`/api/card-sets/${cardSetId}/${lessonEndpoint}cards`)
             .then((res) => {
               console.log(res.data);
               cards.value = res.data;
@@ -238,7 +247,14 @@ export default {
     });
 
     const loadCard = function (card) {
-      router.push(`/manage-card-sets/${cardSetId}/${card.id}`);
+      const routeName = isLesson ? 'editCardInLesson' : 'editCard';
+      router.push({
+        name: routeName,
+        params: {
+          cardSetId,
+          cardId: card.id,
+        },
+      });
     };
 
     return {

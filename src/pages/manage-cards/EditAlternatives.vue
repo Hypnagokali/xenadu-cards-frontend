@@ -4,6 +4,15 @@
       <h4 class="title_subtitle">Alternatives for</h4>
       <h4 class="subtitle">... '{{ word }}'</h4>
     </div>
+    <div class="row q-mb-xs">
+      <div class="offset-8 col-4">
+        <q-btn
+          label="<< Back"
+          color="warning"
+          :to="{ name: 'editCard', params: { cardSetId, cardId } }"
+        ></q-btn>
+      </div>
+    </div>
     <q-card style="max-width: 94vw; min-height: 60vh">
       <q-card-section>
         <div class="row">
@@ -88,6 +97,8 @@ export default {
       });
 
     return {
+      cardSetId,
+      cardId,
       word,
       alternatives,
       remove(altId) {
