@@ -1,0 +1,126 @@
+<template>
+  <q-page class="q-mt-lg">
+    <div>
+      <h4 class="title_subtitle">Lessons of</h4>
+      <div class="subtitle">
+        Front: '{{ card.front }}'
+        <br />
+        Back: '{{ card.back }}''
+      </div>
+    </div>
+    <div class="row q-mb-xs">
+      <div class="offset-8 col-4">
+        <q-btn label="<< Back" color="warning"></q-btn>
+      </div>
+    </div>
+    <q-card style="max-width: 94vw; min-height: 60vh">
+      <q-card-section>
+        <q-table
+          label="Assignements"
+          :columns="cols"
+          :rows="allLessonsOfCardSet"
+          :filter="filter"
+        >
+          <template v-slot:body-cell-assigned="props">
+            <q-td style="text-align: center">
+              <q-icon name="done" v-if="isAssigned(props.row)" />
+            </q-td>
+          </template>
+          <template v-slot:body-cell-action="props">
+            <q-td style="text-align: center">
+              <q-btn
+                label="take out"
+                size="sm"
+                outline
+                color="orange-10"
+                v-if="isAssigned(props.row)"
+              />
+              <q-btn label="assign" outline color="green-10" size="sm" v-else />
+            </q-td>
+          </template>
+        </q-table>
+      </q-card-section>
+    </q-card>
+  </q-page>
+</template>
+
+<script>
+import { onMounted, ref } from 'vue';
+import { api } from 'src/boot/api';
+import { useRoute } from 'vue-router';
+import { XenaduNotify } from 'src/composables/xenadu-notify';
+
+const cols = ref([
+  {
+    label: 'Lesson',
+    field: 'name',
+    name: 'name',
+    align: 'center',
+  },
+  {
+    label: 'Assigned?',
+    name: 'assigned',
+    align: 'center',
+  },
+  {
+    label: 'Action',
+    name: 'action',
+    align: 'center',
+  },
+]);
+
+const allLessonsOfCardSet = ref([
+  {
+    id: 1,
+    name: 'Lesson 1',
+  },
+  {
+    id: 2,
+    name: 'Lesson 2',
+  },
+  {
+    id: 3,
+    name: 'Lesson 3',
+  },
+]);
+
+const assignedToLessons = ref([
+  {
+    id: 1,
+  },
+  {
+    id: 3,
+  },
+]);
+
+const card = ref({
+  front: 'Front',
+  back: 'Back',
+});
+
+export default {
+  name: 'EditAlternatives',
+
+  setup() {
+    const route = useRoute();
+    const cardSetId = route.params.cardSetId;
+    const cardId = route.params.cardId;
+
+    onMounted(() => {
+      // load init state
+    });
+
+    return {
+      cols,
+      allLessonsOfCardSet,
+      assignedToLessons,
+      filter: ref(''),
+      card,
+      cardId,
+      isAssigned(row) {
+        return assignedToLessons.value.findIndex((l) => l.id === row.id) > -1;
+      },
+    };
+  },
+};
+</script>

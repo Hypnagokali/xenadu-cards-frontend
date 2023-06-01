@@ -3,9 +3,26 @@
     <div>
       <h4 class="title_subtitle">{{ title }}</h4>
       <h4 class="subtitle">... Card set '{{ cardSet.name }}'</h4>
+      <q-card style="max-width: 94vw" class="row" v-if="card.id > 0">
+        <q-card-section>
+          <strong>Card assigned to lessons:</strong>
+          <p>
+            {{ outputLessonNames }}
+          </p>
+        </q-card-section>
+        <div class="row justify-end q-pr-sm q-pb-sm" style="width: 100%">
+          <q-btn
+            color="primary"
+            outline
+            size="sm"
+            label="Manage lessons"
+            @click="manageLessons()"
+          />
+        </div>
+      </q-card>
     </div>
     <div>
-      <q-card style="max-width: 94vw">
+      <q-card style="max-width: 94vw" class="q-mt-xl">
         <q-card-section>
           <div class="row">
             <div class="col-12" style="text-align: center">
@@ -158,7 +175,7 @@
 
 <script>
 import { useRoute, useRouter } from 'vue-router';
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { api } from 'src/boot/api';
 import { useUserStore } from 'stores/userStore';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
@@ -198,6 +215,7 @@ const cardSet = ref({
 });
 
 const card = ref(new Card());
+const lessonNames = ref([]);
 
 const user = ref({
   id: 0,
@@ -214,6 +232,18 @@ const setCardAttributes = (cardSetId, cardId) => {
     .then((res) => {
       console.log(res.data);
       card.value = res.data;
+    })
+    .then(() => {
+      if (cardId > 0) {
+        api
+          .get(`/api/card-sets/${cardSetId}/cards/${cardId}/lessons`)
+          .then((res) => {
+            lessonNames.value = res.data.map((l) => l.name);
+          })
+          .catch(() => {
+            XenaduNotify.error('Could not retrieve lessons for this card.');
+          });
+      }
     })
     .catch((err) => console.log(err));
 };
@@ -234,6 +264,8 @@ export default {
 
     const title = cardId === 0 ? 'Add Card' : 'Edit Card';
     console.log(cardId === 0);
+
+    const outputLessonNames = computed(() => lessonNames.value.join(', '));
 
     onMounted(() => {
       if (isLesson) {
@@ -282,6 +314,7 @@ export default {
       cardSet,
       title,
       newLink,
+      outputLessonNames,
       linkToAlternatives(cardSide = 'back') {
         router.push({
           name: 'alternatives',
@@ -359,8 +392,19 @@ export default {
             });
         }
       },
+      manageLessons() {
+        if (isLesson) {
+          router.push({ name: 'assignToLessonsInLesson', cardSetId });
+        } else {
+          router.push({ name: 'assignToLessons', cardSetId });
+        }
+      },
       back() {
-        router.push(`/manage-card-sets/${cardSetId}`);
+        if (isLesson) {
+          router.push({ name: 'manageCardsInLesson', cardSetId });
+        } else {
+          router.push({ name: 'manageCards', cardSetId });
+        }
       },
       getGenderClass(card) {
         if (!card.noun) return '';

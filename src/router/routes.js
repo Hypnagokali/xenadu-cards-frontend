@@ -37,6 +37,16 @@ const routes = [
             component: () => import('pages/manage-cards/EditCard'),
           },
           {
+            path: ':cardSetId/lessons/:lessonId/cards/:cardId/lessons',
+            name: 'assignToLessonsInLesson',
+            component: () => import('pages/manage-cards/AssignLessons'),
+          },
+          {
+            path: ':cardSetId/cards/:cardId/lessons',
+            name: 'assignToLessons',
+            component: () => import('pages/manage-cards/AssignLessons'),
+          },
+          {
             path: ':cardSetId/:cardId/alternatives/:cardSide',
             name: 'alternatives',
             component: () => import('pages/manage-cards/EditAlternatives'),
