@@ -20,6 +20,8 @@
           :columns="cols"
           :rows="allLessonsOfCardSet"
           :filter="filter"
+          rows-per-page-options="0"
+          no-data-label="No lessons in this card sets"
         >
           <template v-slot:body-cell-assigned="props">
             <q-td style="text-align: center">
