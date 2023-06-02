@@ -10,7 +10,7 @@
     </div>
     <div class="row q-mb-xs">
       <div class="offset-8 col-4">
-        <q-btn label="<< Back" color="warning"></q-btn>
+        <q-btn label="<< Back" color="warning" @click="back()"></q-btn>
       </div>
     </div>
     <q-card style="max-width: 94vw; min-height: 60vh">
@@ -20,7 +20,7 @@
           :columns="cols"
           :rows="allLessonsOfCardSet"
           :filter="filter"
-          rows-per-page-options="0"
+          :rows-per-page-options="[0]"
           no-data-label="No lessons in this card sets"
         >
           <template v-slot:body-cell-assigned="props">
@@ -35,9 +35,17 @@
                 size="sm"
                 outline
                 color="orange-10"
+                @click="removeFromLesson(props.row)"
                 v-if="isAssigned(props.row)"
               />
-              <q-btn label="assign" outline color="green-10" size="sm" v-else />
+              <q-btn
+                @click="assignToLesson(props.row)"
+                label="assign"
+                outline
+                color="green-10"
+                size="sm"
+                v-else
+              />
             </q-td>
           </template>
         </q-table>
@@ -49,7 +57,7 @@
 <script>
 import { onMounted, ref } from 'vue';
 import { api } from 'src/boot/api';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { XenaduNotify } from 'src/composables/xenadu-notify';
 import { getCardSet } from 'src/composables/api/cardApi';
 
@@ -106,17 +114,43 @@ export default {
 
   setup() {
     const route = useRoute();
+    const router = useRouter();
     const cardSetId = route.params.cardSetId;
     const cardId = route.params.cardId;
+    const lessonId = route.params.lessonId;
+    const isLesson = !!lessonId;
+
+    if (isLesson) {
+      console.log('--- Lesson View ---');
+    }
+
+    const cardSetCall = getCardSet(cardSetId);
 
     onMounted(() => {
       // load init state
-      getCardSet(cardSetId)
+      cardSetCall
         .getCard(cardId)
         .retrieve()
         .then((c) => {
           card.value = c;
         });
+
+      cardSetCall
+        .getLessons()
+        .retrieve()
+        .then((fetchedLessons) => (allLessonsOfCardSet.value = fetchedLessons))
+        .catch(() => {
+          XenaduNotify.error('Could not fetch lessons');
+        });
+
+      cardSetCall
+        .getCard(cardId)
+        .getLessons()
+        .retrieve()
+        .then((fetchedLessons) => (assignedToLessons.value = fetchedLessons))
+        .catch(() =>
+          XenaduNotify.error('Could not fetch lessons the card is assigned to')
+        );
     });
 
     return {
@@ -126,6 +160,48 @@ export default {
       filter: ref(''),
       card,
       cardId,
+      assignToLesson(lessonRow) {
+        cardSetCall
+          .getLesson(lessonRow.id)
+          .assignCard(cardId)
+          .then(() => {
+            const lesson = allLessonsOfCardSet.value.find(
+              (l) => l.id === lessonRow.id
+            );
+            assignedToLessons.value.push(lesson);
+          });
+      },
+      removeFromLesson(lessonRow) {
+        cardSetCall
+          .getLesson(lessonRow.id)
+          .removeCard(cardId)
+          .then(() => {
+            const index = assignedToLessons.value.findIndex(
+              (l) => l.id === lessonRow.id
+            );
+            assignedToLessons.value.splice(index, 1);
+          });
+      },
+      back() {
+        if (isLesson) {
+          router.push({
+            name: 'editCardInLesson',
+            params: {
+              cardId,
+              cardSetId,
+              lessonId,
+            },
+          });
+        } else {
+          router.push({
+            name: 'editCard',
+            params: {
+              cardId,
+              cardSetId,
+            },
+          });
+        }
+      },
       isAssigned(row) {
         return assignedToLessons.value.findIndex((l) => l.id === row.id) > -1;
       },

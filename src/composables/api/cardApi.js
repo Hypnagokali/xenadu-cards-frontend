@@ -16,6 +16,16 @@ const getCardSet = function (cardSetId) {
             Lesson
           );
         },
+        assignCard: function (cardId) {
+          return api.post(
+            `/api/card-sets/${cardSetId}/lessons/${lessonId}/assign/${cardId}`
+          );
+        },
+        removeCard: function (cardId) {
+          return api.post(
+            `/api/card-sets/${cardSetId}/lessons/${lessonId}/remove/${cardId}`
+          );
+        },
         getCards: function () {
           return {
             retrieve: function () {
@@ -24,6 +34,17 @@ const getCardSet = function (cardSetId) {
               );
             },
           };
+        },
+      };
+    },
+
+    getLessons: function () {
+      return {
+        retrieve: function () {
+          return extractResponse(
+            api.get(`/api/card-sets/${cardSetId}/lessons`),
+            Lesson
+          );
         },
       };
     },
@@ -57,6 +78,16 @@ const getCardSet = function (cardSetId) {
                 api.delete(
                   `/api/card-sets/${cardSetId}/cards/${cardId}/alternative/${altId}`
                 )
+              );
+            },
+          };
+        },
+        getLessons: function () {
+          return {
+            retrieve: function () {
+              return extractResponse(
+                api.get(`/api/card-sets/${cardSetId}/cards/${cardId}/lessons`),
+                Lesson
               );
             },
           };
