@@ -1,12 +1,23 @@
 <template>
   <q-page>
     <div>
-      <h5>Manage Cards: {{ cardSet.name }}</h5>
+      <h5>
+        Manage Cards: {{ cardSet.name }}
+        <p v-if="isLesson && lesson != null" class="subtitle">
+          {{ lesson.name }}
+        </p>
+      </h5>
     </div>
     <div>
       <div class="row q-mb-sm q-mr-sm">
+        <div class="row-12">
+          <q-btn label="<<" color="warning" @click="back()"></q-btn>
+        </div>
+      </div>
+      <div class="row q-mb-sm q-mr-sm">
         <div class="col-12">
           <q-btn
+            v-if="!isLesson"
             label="Manage Lessons"
             icon="view_list"
             color="primary"
@@ -124,10 +135,12 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useUserStore } from 'stores/userStore';
 import { useRouter, useRoute } from 'vue-router';
 import { api } from 'boot/api';
+import { getCardSet } from 'src/composables/api/cardApi';
+import { XenaduNotify } from 'src/composables/xenadu-notify';
 
 const columns = [
   {
@@ -206,6 +219,16 @@ export default {
     const lessonId = route.params.lessonId;
     const isLesson = !!lessonId;
 
+    const lesson = ref(null);
+
+    // const lesson = computed(() => {
+    //   if (isLesson) {
+    //     return getCardSet(cardSetId).getLesson(lessonId).retrieve;
+    //   } else {
+    //     return null;
+    //   }
+    // });
+
     const showEditDialog = ref(false);
 
     // TODO: GET /card-sets/{cardSetId}
@@ -222,28 +245,47 @@ export default {
         .then((fetchedUser) => {
           user.value = fetchedUser;
           console.log('Lese User: ', user.value);
-
-          api
-            .get(`/api/card-sets/${cardSetId}`)
-            .then((res) => {
-              cardSet.value = res.data;
-            })
-            .catch((err) => console.log(err));
-
-          const lessonEndpoint = isLesson ? `lessons/${lessonId}/` : '';
-
-          api
-            .get(`/api/card-sets/${cardSetId}/${lessonEndpoint}cards`)
-            .then((res) => {
-              console.log(res.data);
-              cards.value = res.data;
-            })
-            .catch((err) => console.log(err));
         })
         .catch((e) => {
           console.error(e);
           console.error('Fehler beim Laden des Users');
         });
+
+      api
+        .get(`/api/card-sets/${cardSetId}`)
+        .then((res) => {
+          cardSet.value = res.data;
+        })
+        .catch((err) => console.log(err));
+
+      const cardSetCall = getCardSet(cardSetId);
+
+      console.log('MUH');
+      if (isLesson) {
+        const lessonCall = cardSetCall.getLesson(lessonId);
+
+        lessonCall
+          .getCards()
+          .retrieve()
+          .then((fetchedCards) => (cards.value = fetchedCards))
+          .catch(() => XenaduNotify.error('Cannot fetch cards from lesson'));
+
+        lessonCall
+          .retrieve()
+          .then((fetchedLesson) => (lesson.value = fetchedLesson));
+      } else {
+        cardSetCall.getCards();
+      }
+
+      const lessonEndpoint = isLesson ? `lessons/${lessonId}/` : '';
+
+      api
+        .get(`/api/card-sets/${cardSetId}/${lessonEndpoint}cards`)
+        .then((res) => {
+          console.log(res.data);
+          cards.value = res.data;
+        })
+        .catch((err) => console.log(err));
     });
 
     const loadCard = function (card) {
@@ -258,6 +300,8 @@ export default {
     };
 
     return {
+      isLesson,
+      lesson,
       cardSetId,
       selectedCard,
       confirmDelete,
@@ -269,6 +313,13 @@ export default {
       printField,
       loadCard,
       showEditDialog,
+      back() {
+        if (isLesson) {
+          router.push({ name: 'manageLessons', params: { cardSetId } });
+        } else {
+          router.push({ name: 'manageCardSets' });
+        }
+      },
       confirmDeleteCard(card) {
         selectedCard.value = card;
         confirmDelete.value = true;

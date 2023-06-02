@@ -9,6 +9,7 @@ const routes = [
         children: [
           {
             path: '',
+            name: 'manageCardSets',
             component: () => import('pages/manage-cards/ManageCardSets'),
           },
           {

@@ -1,11 +1,41 @@
 import { api } from 'boot/api';
 import { extractResponse } from 'src/composables/api/extractResponse';
+import Lesson from 'src/classes/lesson';
 
 const getCardSet = function (cardSetId) {
   return {
     retrieve: function () {
       return extractResponse(api.get(`/api/card-sets/${cardSetId}`));
     },
+
+    getLesson: function (lessonId) {
+      return {
+        retrieve: function () {
+          return extractResponse(
+            api.get(`/api/card-sets/${cardSetId}/lessons/${lessonId}`),
+            Lesson
+          );
+        },
+        getCards: function () {
+          return {
+            retrieve: function () {
+              return extractResponse(
+                api.get(`/api/card-sets/${cardSetId}/lessons/${lessonId}/cards`)
+              );
+            },
+          };
+        },
+      };
+    },
+
+    getCards: function () {
+      return {
+        retrieve: function () {
+          return extractResponse(api.get(`/api/card-sets/${cardSetId}/cards`));
+        },
+      };
+    },
+
     getCard: function (cardId) {
       return {
         retrieve: function () {
