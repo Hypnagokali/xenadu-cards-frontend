@@ -364,7 +364,6 @@ export default {
               XenaduNotify.error('Could not update card :(');
             });
         } else {
-          // POST and if lesson assign to lesson
           api
             .post(`/api/card-sets/${cardSetId}/cards`, card.value)
             .then((res) => {

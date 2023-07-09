@@ -4,7 +4,8 @@
       <h5>
         Manage Cards: {{ cardSet.name }}
         <p v-if="isLesson && lesson != null" class="subtitle">
-          {{ lesson.name }}
+          Lesson:
+          <strong>{{ lesson.name }}</strong>
         </p>
       </h5>
     </div>
@@ -65,6 +66,13 @@
               icon="edit"
               @click="loadCard(props.row)"
             />
+            <q-btn
+              v-if="isLesson"
+              class="float-right"
+              flat
+              icon="logout"
+              @click="removeCardFromLesson(props.row)"
+            />
           </q-td>
         </template>
         <template v-slot:item="props">
@@ -90,6 +98,32 @@
         </template>
       </q-table>
 
+      <q-dialog v-model="confirmRemove" persistent>
+        <q-card>
+          <q-card-section>
+            <div class="row">
+              <div class="col-12">
+                <p>Do want to remove the card from this lesson?</p>
+                <p v-if="selectedCard != null">
+                  <strong>
+                    {{ selectedCard.front }} / {{ selectedCard.back }}
+                  </strong>
+                </p>
+              </div>
+            </div>
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat label="Cancel" color="secondary" v-close-popup />
+            <q-btn
+              flat
+              label="Remove"
+              color="orange-10"
+              @click="removeSelectedCard()"
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
       <q-dialog v-model="confirmDelete" persistent>
         <q-card>
           <q-card-section>
@@ -103,10 +137,10 @@
               </div>
               <div class="col-9">
                 <p class="q-mr-sm">
-                  Do you want to delete the Card
+                  Delete the following card permanently?
                   <br />
                   <strong>
-                    {{ selectedCard.front }} / {{ selectedCard.back }}?
+                    {{ selectedCard.front }} / {{ selectedCard.back }}
                   </strong>
                 </p>
               </div>
@@ -114,7 +148,9 @@
             <div class="row">
               <div class="col-3"></div>
               <div class="col-9">
-                <p class="q-mr-sm">Warning: cannot undo deletion</p>
+                <p class="q-mr-sm text-red">
+                  Warning: deletes card from all lessons and from card set
+                </p>
               </div>
             </div>
           </q-card-section>
@@ -197,6 +233,7 @@ const user = ref({
 });
 
 const confirmDelete = ref(false);
+const confirmRemove = ref(false);
 
 const printField = function (card) {
   const lf = card.back.indexOf('\n');
@@ -310,9 +347,31 @@ export default {
       cardSet,
       cards,
       columns,
+      confirmRemove,
       printField,
       loadCard,
       showEditDialog,
+      removeSelectedCard() {
+        const cardSetCall = getCardSet(cardSetId);
+        cardSetCall
+          .getLesson(lessonId)
+          .removeCard(selectedCard.value.id)
+          .then(() => {
+            const i = cards.value.findIndex(
+              (c) => c.id === selectedCard.value.id
+            );
+            cards.value.splice(i, 1);
+
+            confirmRemove.value = false;
+            selectedCard.value = null;
+            XenaduNotify.info('Card removed');
+          })
+          .catch(() => XenaduNotify.error('Could not remove card from lessen'));
+      },
+      removeCardFromLesson(card) {
+        selectedCard.value = card;
+        confirmRemove.value = true;
+      },
       back() {
         if (isLesson) {
           router.push({ name: 'manageLessons', params: { cardSetId } });
